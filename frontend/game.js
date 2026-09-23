@@ -92,6 +92,7 @@ async function choose(i) {
 
     if (data.correct) {
       cards[i].classList.add('good');
+      cards[i].textContent = '😈';
       statusEl.textContent = 'Правильно! Следующий уровень…';
 
       if (data.won) {
@@ -113,6 +114,7 @@ async function choose(i) {
 
     } else {
       cards[i].classList.add('bad');
+      cards[i].textContent = '😇';
 
       statusEl.textContent = 'Ой! Это была не та карточка 💥';
 
