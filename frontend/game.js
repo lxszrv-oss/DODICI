@@ -109,13 +109,25 @@ async function choose(i) {
       }
 
       setTimeout(() => {
-        level = data.level;
-        attempt++;
-        reset();
-        locked = false;
-        statusEl.textContent = 'Выбери одну карту';
-        hud();
-      }, 650);
+  level = data.level;
+  attempt++;
+
+  reset();
+
+  cards.forEach(card => {
+    card.classList.remove('card-enter');
+  });
+
+  void cards[0].offsetWidth;
+
+  cards.forEach(card => {
+    card.classList.add('card-enter');
+  });
+
+  locked = false;
+  statusEl.textContent = 'Выбери одну карту';
+  hud();
+}, 650);
 
     } else {
       cards[i].classList.add('bad');

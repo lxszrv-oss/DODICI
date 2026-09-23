@@ -217,3 +217,35 @@ body.victory {
     transform: translateY(0) scale(1) rotate(0);
   }
 }
+.card-enter {
+  animation: cardEnter 0.55s cubic-bezier(.17,.89,.32,1.49) both;
+}
+
+.card-enter:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.card-enter:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.card-enter:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+@keyframes cardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(50px) scale(0.6) rotate(-8deg);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1.08) rotate(3deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0);
+  }
+}
