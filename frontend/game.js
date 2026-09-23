@@ -25,7 +25,10 @@ function hud() {
 }
 
 function reset() {
-  cards.forEach(c => c.classList.remove('good', 'bad'));
+  cards.forEach((c, i) => {
+    c.classList.remove('good', 'bad');
+    c.textContent = i + 1;
+  });
 }
 
 function finish(title, text) {
