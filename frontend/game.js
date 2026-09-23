@@ -1,4 +1,4 @@
-const API_URL = "https://dod-geology-when-political.trycloudflare.com";
+const API_URL = "https://dodici.onrender.com";
 
 const tg = window.Telegram?.WebApp;
 if (tg) {
