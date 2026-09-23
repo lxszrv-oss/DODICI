@@ -18,6 +18,60 @@ let gameId = null;
 let level = 1;
 let attempt = 1;
 let locked = false;
+// DODICI — sounds
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  const now = audioCtx.currentTime;
+
+  if (type === 'win') {
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.setValueAtTime(780, now + 0.08);
+    osc.frequency.setValueAtTime(1040, now + 0.16);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+    osc.start(now);
+    osc.stop(now + 0.35);
+  }
+
+  if (type === 'lose') {
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(90, now + 0.35);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.3, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+    osc.start(now);
+    osc.stop(now + 0.4);
+  }
+
+  if (type === 'level') {
+    osc.frequency.setValueAtTime(660, now);
+    osc.frequency.setValueAtTime(880, now + 0.1);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+
+    osc.start(now);
+    osc.stop(now + 0.25);
+  }
+}
 
 function hud() {
   levelEl.textContent = String(level).padStart(2, '0') + ' / 12';
@@ -95,6 +149,7 @@ async function choose(i) {
 
     if (data.correct) {
       cards[i].classList.add('good');
+      playSound('win');
       document.body.classList.add('victory');
       setTimeout(() => document.body.classList.remove('victory'), 800);
       cards[i].textContent = '😈';
@@ -110,6 +165,7 @@ async function choose(i) {
 
       setTimeout(() => {
   level = data.level;
+  playSound('level');
   attempt++;
 
   reset();
@@ -131,6 +187,7 @@ async function choose(i) {
 
     } else {
       cards[i].classList.add('bad');
+      playSound('lose');
       cards[i].textContent = '😇';
 
       statusEl.textContent = 'Ой! Это была не та карточка 💥';
