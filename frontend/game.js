@@ -95,6 +95,8 @@ async function choose(i) {
 
     if (data.correct) {
       cards[i].classList.add('good');
+      document.body.classList.add('victory');
+      setTimeout(() => document.body.classList.remove('victory'), 800);
       cards[i].textContent = '😈';
       statusEl.textContent = 'Правильно! Следующий уровень…';
 
