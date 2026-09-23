@@ -12,6 +12,7 @@ app.add_middleware(
         "http://127.0.0.1:8080",
         "http://localhost:8080",
         "https://dans-assumption-reprints-avenue.trycloudflare.com",
+        "https://dodici-game.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
