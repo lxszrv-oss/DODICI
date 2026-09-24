@@ -51,6 +51,24 @@ if DATABASE_URL:
             )
         )
 
+        connection.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS players (
+                    telegram_id BIGINT PRIMARY KEY,
+                    username VARCHAR(255),
+                    first_name VARCHAR(255),
+                    games_played INTEGER NOT NULL DEFAULT 0,
+                    wins INTEGER NOT NULL DEFAULT 0,
+                    losses INTEGER NOT NULL DEFAULT 0,
+                    best_level INTEGER NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+        )
+
 
 # ============================================================
 # LOGGING
@@ -96,6 +114,179 @@ class Choice(BaseModel):
 
 class TelegramAuth(BaseModel):
     init_data: str
+
+
+# ============================================================
+# DATABASE HELPERS
+# ============================================================
+
+def require_database():
+    if engine is None:
+        logger.error("DATABASE_URL is not configured")
+        return False
+
+    return True
+
+
+def ensure_player(user):
+    """
+    Creates the player if they don't exist.
+    Updates Telegram username/name if they already exist.
+    """
+
+    if not require_database():
+        return False
+
+    telegram_id = user.get("id")
+    username = user.get("username")
+    first_name = user.get("first_name")
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO players (
+                    telegram_id,
+                    username,
+                    first_name
+                )
+                VALUES (
+                    :telegram_id,
+                    :username,
+                    :first_name
+                )
+                ON CONFLICT (telegram_id)
+                DO UPDATE SET
+                    username = EXCLUDED.username,
+                    first_name = EXCLUDED.first_name,
+                    updated_at = CURRENT_TIMESTAMP
+                """
+            ),
+            {
+                "telegram_id": telegram_id,
+                "username": username,
+                "first_name": first_name
+            }
+        )
+
+    return True
+
+
+def get_player(telegram_id):
+    if not require_database():
+        return None
+
+    with engine.connect() as connection:
+        result = connection.execute(
+            text(
+                """
+                SELECT
+                    telegram_id,
+                    username,
+                    first_name,
+                    games_played,
+                    wins,
+                    losses,
+                    best_level,
+                    created_at,
+                    updated_at
+                FROM players
+                WHERE telegram_id = :telegram_id
+                """
+            ),
+            {
+                "telegram_id": telegram_id
+            }
+        ).mappings().first()
+
+    if result is None:
+        return None
+
+    return dict(result)
+
+
+def get_game(game_id: str):
+    if not require_database():
+        return None
+
+    with engine.connect() as connection:
+        result = connection.execute(
+            text(
+                """
+                SELECT
+                    game_id,
+                    user_id,
+                    level,
+                    winning_cards,
+                    finished,
+                    won
+                FROM games
+                WHERE game_id = :game_id
+                """
+            ),
+            {
+                "game_id": game_id
+            }
+        ).mappings().first()
+
+    if result is None:
+        return None
+
+    try:
+        winning_cards = json.loads(result["winning_cards"])
+    except Exception:
+        logger.exception(
+            "Failed to decode winning_cards for game_id=%s",
+            game_id
+        )
+        return None
+
+    return {
+        "game_id": result["game_id"],
+        "user_id": result["user_id"],
+        "level": result["level"],
+        "winning_cards": {
+            int(key): value
+            for key, value in winning_cards.items()
+        },
+        "finished": result["finished"],
+        "won": result["won"]
+    }
+
+
+def update_player_after_game(
+    telegram_id,
+    won,
+    level
+):
+    """
+    Updates player statistics after a finished game.
+    """
+
+    if not require_database():
+        return
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                UPDATE players
+                SET
+                    games_played = games_played + 1,
+                    wins = wins + :wins,
+                    losses = losses + :losses,
+                    best_level = GREATEST(best_level, :level),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE telegram_id = :telegram_id
+                """
+            ),
+            {
+                "telegram_id": telegram_id,
+                "wins": 1 if won else 0,
+                "losses": 0 if won else 1,
+                "level": level
+            }
+        )
 
 
 # ============================================================
@@ -189,67 +380,6 @@ def validate_telegram_init_data(init_data: str):
 
 
 # ============================================================
-# DATABASE HELPERS
-# ============================================================
-
-def require_database():
-    if engine is None:
-        logger.error("DATABASE_URL is not configured")
-        return False
-
-    return True
-
-
-def get_game(game_id: str):
-    if not require_database():
-        return None
-
-    with engine.connect() as connection:
-        result = connection.execute(
-            text(
-                """
-                SELECT
-                    game_id,
-                    user_id,
-                    level,
-                    winning_cards,
-                    finished,
-                    won
-                FROM games
-                WHERE game_id = :game_id
-                """
-            ),
-            {
-                "game_id": game_id
-            }
-        ).mappings().first()
-
-    if result is None:
-        return None
-
-    try:
-        winning_cards = json.loads(result["winning_cards"])
-    except Exception:
-        logger.exception(
-            "Failed to decode winning_cards for game_id=%s",
-            game_id
-        )
-        return None
-
-    return {
-        "game_id": result["game_id"],
-        "user_id": result["user_id"],
-        "level": result["level"],
-        "winning_cards": {
-            int(key): value
-            for key, value in winning_cards.items()
-        },
-        "finished": result["finished"],
-        "won": result["won"]
-    }
-
-
-# ============================================================
 # HEALTH
 # ============================================================
 
@@ -288,6 +418,8 @@ def telegram_auth(data: TelegramAuth):
             "error": error
         }
 
+    ensure_player(user)
+
     return {
         "ok": True,
         "user": {
@@ -296,6 +428,62 @@ def telegram_auth(data: TelegramAuth):
             "last_name": user.get("last_name"),
             "username": user.get("username"),
             "photo_url": user.get("photo_url")
+        }
+    }
+
+
+# ============================================================
+# PLAYER PROFILE
+# ============================================================
+
+@app.get("/player/profile")
+def player_profile(
+    x_telegram_init_data: str | None = Header(default=None)
+):
+    if not x_telegram_init_data:
+        return {
+            "ok": False,
+            "error": "telegram_auth_required"
+        }
+
+    user, error = validate_telegram_init_data(
+        x_telegram_init_data
+    )
+
+    if error:
+        return {
+            "ok": False,
+            "error": error
+        }
+
+    if not require_database():
+        return {
+            "ok": False,
+            "error": "database_not_configured"
+        }
+
+    ensure_player(user)
+
+    player = get_player(
+        user.get("id")
+    )
+
+    if player is None:
+        return {
+            "ok": False,
+            "error": "player_not_found"
+        }
+
+    return {
+        "ok": True,
+        "player": {
+            "telegram_id": player["telegram_id"],
+            "username": player["username"],
+            "first_name": player["first_name"],
+            "games_played": player["games_played"],
+            "wins": player["wins"],
+            "losses": player["losses"],
+            "best_level": player["best_level"]
         }
     }
 
@@ -343,6 +531,8 @@ def start_game(
             "ok": False,
             "error": "database_not_configured"
         }
+
+    ensure_player(user)
 
     game_id = str(uuid.uuid4())
 
@@ -438,6 +628,8 @@ def choice(
             "error": "database_not_configured"
         }
 
+    ensure_player(user)
+
     game = get_game(data.game_id)
 
     if game is None:
@@ -500,6 +692,12 @@ def choice(
                 }
             )
 
+        update_player_after_game(
+            telegram_id=user.get("id"),
+            won=False,
+            level=data.level
+        )
+
         return {
             "ok": True,
             "correct": False,
@@ -526,6 +724,12 @@ def choice(
                     "game_id": data.game_id
                 }
             )
+
+        update_player_after_game(
+            telegram_id=user.get("id"),
+            won=True,
+            level=12
+        )
 
         return {
             "ok": True,
