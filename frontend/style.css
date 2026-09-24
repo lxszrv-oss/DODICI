@@ -559,3 +559,14 @@ body.victory {
   opacity: 1;
   visibility: visible;
 }
+/* Mobile — menu does not cover the logo */
+
+@media (max-width: 600px) {
+
+  .side-menu {
+    top: 78px;
+    bottom: 0;
+    border-top-right-radius: 18px;
+  }
+
+}
