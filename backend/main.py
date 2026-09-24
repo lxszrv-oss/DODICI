@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import hashlib
 import hmac
 import json
+import logging
 import os
 import secrets
 import time
@@ -12,6 +13,10 @@ from urllib.parse import parse_qsl
 
 
 app = FastAPI(title="DODICI API")
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("dodici")
 
 
 app.add_middleware(
@@ -45,29 +50,39 @@ games = {}
 
 def validate_telegram_init_data(init_data: str):
     if not BOT_TOKEN:
+        logger.error("TELEGRAM_BOT_TOKEN is not configured")
         return None, "telegram_token_not_configured"
+
+    if not init_data:
+        logger.error("Telegram initData is empty")
+        return None, "telegram_init_data_empty"
 
     try:
         parsed = dict(parse_qsl(init_data, keep_blank_values=True))
     except Exception:
+        logger.exception("Failed to parse Telegram initData")
         return None, "invalid_init_data"
 
     received_hash = parsed.pop("hash", None)
 
     if not received_hash:
+        logger.error("Telegram initData hash is missing")
         return None, "hash_missing"
 
     auth_date = parsed.get("auth_date")
 
     if not auth_date:
+        logger.error("Telegram auth_date is missing")
         return None, "auth_date_missing"
 
     try:
         auth_timestamp = int(auth_date)
     except ValueError:
+        logger.error("Telegram auth_date is invalid")
         return None, "invalid_auth_date"
 
     if abs(time.time() - auth_timestamp) > 86400:
+        logger.error("Telegram initData is expired")
         return None, "init_data_expired"
 
     data_check_string = "\n".join(
@@ -75,6 +90,8 @@ def validate_telegram_init_data(init_data: str):
         for key, value in sorted(parsed.items())
     )
 
+    # Telegram Mini App validation:
+    # secret_key = HMAC-SHA256(key="WebAppData", message=bot_token)
     secret_key = hmac.new(
         b"WebAppData",
         BOT_TOKEN.encode(),
@@ -88,17 +105,30 @@ def validate_telegram_init_data(init_data: str):
     ).hexdigest()
 
     if not hmac.compare_digest(calculated_hash, received_hash):
+        logger.error("Telegram initData signature is invalid")
         return None, "invalid_telegram_signature"
 
     user_raw = parsed.get("user")
 
     if not user_raw:
+        logger.error("Telegram user is missing")
         return None, "telegram_user_missing"
 
     try:
         user = json.loads(user_raw)
     except json.JSONDecodeError:
+        logger.exception("Telegram user JSON is invalid")
         return None, "invalid_telegram_user"
+
+    if not user.get("id"):
+        logger.error("Telegram user ID is missing")
+        return None, "telegram_user_id_missing"
+
+    logger.info(
+        "Telegram user authenticated: id=%s username=%s",
+        user.get("id"),
+        user.get("username")
+    )
 
     return user, None
 
@@ -134,16 +164,31 @@ def telegram_auth(data: TelegramAuth):
 
 
 @app.post("/game/start")
-def start_game(x_telegram_init_data: str | None = Header(default=None)):
+def start_game(
+    x_telegram_init_data: str | None = Header(default=None)
+):
+    logger.info(
+        "POST /game/start received, initData_present=%s",
+        bool(x_telegram_init_data)
+    )
+
     if not x_telegram_init_data:
+        logger.error("game/start rejected: Telegram initData missing")
         return {
             "ok": False,
             "error": "telegram_auth_required"
         }
 
-    user, error = validate_telegram_init_data(x_telegram_init_data)
+    user, error = validate_telegram_init_data(
+        x_telegram_init_data
+    )
 
     if error:
+        logger.error(
+            "game/start rejected: %s",
+            error
+        )
+
         return {
             "ok": False,
             "error": error
@@ -159,6 +204,12 @@ def start_game(x_telegram_init_data: str | None = Header(default=None)):
         },
         "finished": False
     }
+
+    logger.info(
+        "Game started: game_id=%s user_id=%s",
+        game_id,
+        user.get("id")
+    )
 
     return {
         "ok": True,
@@ -177,13 +228,22 @@ def choice(
     data: Choice,
     x_telegram_init_data: str | None = Header(default=None)
 ):
+    logger.info(
+        "POST /game/choice received, game_id=%s level=%s card=%s",
+        data.game_id,
+        data.level,
+        data.card
+    )
+
     if not x_telegram_init_data:
         return {
             "ok": False,
             "error": "telegram_auth_required"
         }
 
-    user, error = validate_telegram_init_data(x_telegram_init_data)
+    user, error = validate_telegram_init_data(
+        x_telegram_init_data
+    )
 
     if error:
         return {
