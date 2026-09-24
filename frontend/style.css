@@ -577,3 +577,15 @@ body.victory {
   }
 
 }
+@media (max-width: 600px) {
+
+  .menu-button-icon {
+    top: 14px;
+    left: 14px;
+  }
+
+  .brand {
+    margin-left: 80px;
+  }
+
+}
