@@ -12,26 +12,53 @@
 
 <body>
 
+  <!-- START SCREEN -->
   <div id="mainMenu" class="main-menu">
     <div class="menu-logo">😈</div>
 
     <h1>DODICI</h1>
     <p class="menu-subtitle">THE LUCK IS YOURS</p>
 
-    <button id="playButton" class="menu-button">
-      ▶ ИГРАТЬ
-    </button>
-
-    <button id="ratingButton" class="menu-button secondary">
-      🏆 РЕЙТИНГ
-    </button>
-
-    <button id="howButton" class="menu-button secondary">
-      ❓ КАК ИГРАТЬ
-    </button>
+    <div class="tap-to-start">
+      НАЖМИ, ЧТОБЫ НАЧАТЬ
+    </div>
   </div>
 
+
+  <!-- SIDE MENU -->
+  <aside id="sideMenu" class="side-menu">
+
+    <div class="side-menu-title">
+      😈 DODICI
+    </div>
+
+    <button id="ratingButton" class="side-button">
+      🏆 Рейтинг
+    </button>
+
+    <button id="profileButton" class="side-button">
+      👤 Профиль
+    </button>
+
+    <button id="howButton" class="side-button">
+      ❓ Как играть
+    </button>
+
+    <button id="settingsButton" class="side-button">
+      ⚙️ Настройки
+    </button>
+
+  </aside>
+
+  <div id="menuOverlay" class="menu-overlay"></div>
+
+
+  <!-- GAME -->
   <main class="app">
+
+    <button id="menuButton" class="menu-button-icon">
+      ☰
+    </button>
 
     <header>
       <div class="brand">DODICI</div>

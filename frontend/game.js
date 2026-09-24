@@ -1,23 +1,39 @@
 const API_URL = "https://dodici.onrender.com";
 
 const tg = window.Telegram?.WebApp;
+
 if (tg) {
   tg.ready();
   tg.expand();
 }
 
 const cards = [...document.querySelectorAll('.card')];
+
 const levelEl = document.getElementById('level');
 const attemptEl = document.getElementById('attempt');
 const statusEl = document.getElementById('status');
+
 const end = document.getElementById('end');
 const endTitle = document.getElementById('endTitle');
 const endText = document.getElementById('endText');
+
+const mainMenu = document.getElementById('mainMenu');
+
+const menuButton = document.getElementById('menuButton');
+const sideMenu = document.getElementById('sideMenu');
+const menuOverlay = document.getElementById('menuOverlay');
+
+const ratingButton = document.getElementById('ratingButton');
+const profileButton = document.getElementById('profileButton');
+const howButton = document.getElementById('howButton');
+const settingsButton = document.getElementById('settingsButton');
 
 let gameId = null;
 let level = 1;
 let attempt = 1;
 let locked = false;
+
+
 // DODICI — sounds
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -71,12 +87,27 @@ function playSound(type) {
     osc.start(now);
     osc.stop(now + 0.25);
   }
+
+  if (type === 'start') {
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.setValueAtTime(660, now + 0.08);
+    osc.frequency.setValueAtTime(880, now + 0.16);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+    osc.start(now);
+    osc.stop(now + 0.3);
+  }
 }
+
 
 function hud() {
   levelEl.textContent = String(level).padStart(2, '0') + ' / 12';
   attemptEl.textContent = attempt;
 }
+
 
 function reset() {
   cards.forEach((c, i) => {
@@ -85,11 +116,13 @@ function reset() {
   });
 }
 
+
 function finish(title, text) {
   endTitle.textContent = title;
   endText.textContent = text;
   end.classList.remove('hidden');
 }
+
 
 async function startGame() {
   try {
@@ -112,8 +145,11 @@ async function startGame() {
     locked = false;
 
     reset();
+
     end.classList.add('hidden');
+
     statusEl.textContent = 'Выбери одну карту';
+
     hud();
 
   } catch (error) {
@@ -122,10 +158,12 @@ async function startGame() {
   }
 }
 
+
 async function choose(i) {
   if (locked || !gameId) return;
 
   locked = true;
+
   statusEl.textContent = 'Проверяем…';
 
   try {
@@ -148,46 +186,67 @@ async function choose(i) {
     }
 
     if (data.correct) {
+
       cards[i].classList.add('good');
+
       playSound('win');
+
       document.body.classList.add('victory');
-      setTimeout(() => document.body.classList.remove('victory'), 800);
+
+      setTimeout(() => {
+        document.body.classList.remove('victory');
+      }, 800);
+
       cards[i].textContent = '😈';
+
       statusEl.textContent = 'Правильно! Следующий уровень…';
+
 
       if (data.won) {
         finish(
           'ТЫ ПРОШЁЛ DODICI',
           '12 из 12. Поздравляем!'
         );
+
         return;
       }
 
+
       setTimeout(() => {
-  level = data.level;
-  playSound('level');
-  attempt++;
 
-  reset();
+        level = data.level;
 
-  cards.forEach(card => {
-    card.classList.remove('card-enter');
-  });
+        playSound('level');
 
-  void cards[0].offsetWidth;
+        attempt++;
 
-  cards.forEach(card => {
-    card.classList.add('card-enter');
-  });
+        reset();
 
-  locked = false;
-  statusEl.textContent = 'Выбери одну карту';
-  hud();
-}, 650);
+        cards.forEach(card => {
+          card.classList.remove('card-enter');
+        });
+
+        void cards[0].offsetWidth;
+
+        cards.forEach(card => {
+          card.classList.add('card-enter');
+        });
+
+        locked = false;
+
+        statusEl.textContent = 'Выбери одну карту';
+
+        hud();
+
+      }, 650);
+
 
     } else {
+
       cards[i].classList.add('bad');
+
       playSound('lose');
+
       cards[i].textContent = '😇';
 
       statusEl.textContent = 'Ой! Это была не та карточка 💥';
@@ -199,27 +258,126 @@ async function choose(i) {
     }
 
   } catch (error) {
+
     console.error(error);
+
     statusEl.textContent = 'Ошибка соединения с сервером';
+
     locked = false;
   }
 }
 
+
+// CARDS
+
 cards.forEach(card => {
+
   card.addEventListener('click', () => {
+
     choose(Number(card.dataset.index));
+
   });
+
 });
+
+
+// RESTART
 
 document.getElementById('restart').addEventListener('click', () => {
+
   attempt++;
+
   startGame();
+
 });
 
-startGame();
-const mainMenu = document.getElementById('mainMenu');
-const playButton = document.getElementById('playButton');
 
-playButton.addEventListener('click', () => {
+// START SCREEN
+
+mainMenu.addEventListener('click', () => {
+
+  playSound('start');
+
   mainMenu.classList.add('hidden');
+
+  startGame();
+
+});
+
+
+// SIDE MENU
+
+function openMenu() {
+
+  sideMenu.classList.add('open');
+
+  menuOverlay.classList.add('visible');
+
+}
+
+
+function closeMenu() {
+
+  sideMenu.classList.remove('open');
+
+  menuOverlay.classList.remove('visible');
+
+}
+
+
+menuButton.addEventListener('click', () => {
+
+  openMenu();
+
+});
+
+
+menuOverlay.addEventListener('click', () => {
+
+  closeMenu();
+
+});
+
+
+// MENU ITEMS
+
+ratingButton.addEventListener('click', () => {
+
+  closeMenu();
+
+  alert('🏆 Рейтинг скоро появится');
+
+});
+
+
+profileButton.addEventListener('click', () => {
+
+  closeMenu();
+
+  alert('👤 Профиль скоро появится');
+
+});
+
+
+howButton.addEventListener('click', () => {
+
+  closeMenu();
+
+  alert(
+    '❓ КАК ИГРАТЬ\\n\\n' +
+    'Выбери одну из трёх карт.\\n' +
+    'Угадаешь — переходишь дальше.\\n' +
+    'Ошибёшься — игра заканчивается.\\n\\n' +
+    'Пройди все 12 уровней!'
+  );
+
+});
+
+
+settingsButton.addEventListener('click', () => {
+
+  closeMenu();
+
+  alert('⚙️ Настройки скоро появятся');
+
 });
