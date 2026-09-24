@@ -1,1 +1,85 @@
-<!doctype html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>DODICI</title><script src="https://telegram.org/js/telegram-web-app.js"></script><link rel="stylesheet" href="style.css"></head><body><main class="app"><header><div class="brand">DODICI</div><div class="prize">1 000 000 ₽</div></header><section class="hud"><div><span>УРОВЕНЬ</span><strong id="level">01 / 12</strong></div><div><span>ПОПЫТКА</span><strong id="attempt">1</strong></div></section><section class="hero"><p>12 ПРАВИЛЬНЫХ ВЫБОРОВ</p><h1>Найди карту.</h1><small>Одна из трёх — проигрышная. Сделай выбор.</small></section><section class="cards"><button class="card" data-index="0">D</button><button class="card" data-index="1">D</button><button class="card" data-index="2">D</button></section><p id="status">Выбери одну карту</p><section id="end" class="end hidden"><div id="endTitle"></div><div id="endText"></div><button id="restart">ПОПРОБОВАТЬ СНОВА</button></section><footer>Бесплатная игра • DODICI</footer></main><script src="game.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>DODICI</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div id="mainMenu" class="main-menu">
+    <div class="menu-logo">😈</div>
+
+    <h1>DODICI</h1>
+    <p class="menu-subtitle">THE LUCK IS YOURS</p>
+
+    <button id="playButton" class="menu-button">
+      ▶ ИГРАТЬ
+    </button>
+
+    <button id="ratingButton" class="menu-button secondary">
+      🏆 РЕЙТИНГ
+    </button>
+
+    <button id="howButton" class="menu-button secondary">
+      ❓ КАК ИГРАТЬ
+    </button>
+  </div>
+
+  <main class="app">
+
+    <header>
+      <div class="brand">DODICI</div>
+      <div class="prize">1 000 000 ₽</div>
+    </header>
+
+    <section class="hud">
+      <div>
+        <span>УРОВЕНЬ</span>
+        <strong id="level">01 / 12</strong>
+      </div>
+
+      <div>
+        <span>ПОПЫТКА</span>
+        <strong id="attempt">1</strong>
+      </div>
+    </section>
+
+    <section class="hero">
+      <p>12 ПРАВИЛЬНЫХ ВЫБОРОВ</p>
+      <h1>Найди карту.</h1>
+      <small>
+        Одна из трёх — проигрышная.<br>
+        Сделай выбор.
+      </small>
+    </section>
+
+    <section class="cards">
+      <button class="card" data-index="0">D</button>
+      <button class="card" data-index="1">D</button>
+      <button class="card" data-index="2">D</button>
+    </section>
+
+    <p id="status">Выбери одну карту</p>
+
+    <section id="end" class="end hidden">
+      <div id="endTitle"></div>
+      <div id="endText"></div>
+      <button id="restart">ПОПРОБОВАТЬ СНОВА</button>
+    </section>
+
+    <footer>
+      Бесплатная игра • DODICI
+    </footer>
+
+  </main>
+
+  <script src="game.js"></script>
+
+</body>
+</html>
