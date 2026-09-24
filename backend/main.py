@@ -1,17 +1,24 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import hashlib
+import hmac
+import json
+import os
 import secrets
+import time
 import uuid
+from urllib.parse import parse_qsl
+
 
 app = FastAPI(title="DODICI API")
+
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://127.0.0.1:8080",
         "http://localhost:8080",
-        "https://dans-assumption-reprints-avenue.trycloudflare.com",
         "https://dodici-game.onrender.com",
     ],
     allow_credentials=True,
@@ -20,13 +27,80 @@ app.add_middleware(
 )
 
 
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+
 class Choice(BaseModel):
     game_id: str
     level: int
     card: int
 
 
+class TelegramAuth(BaseModel):
+    init_data: str
+
+
 games = {}
+
+
+def validate_telegram_init_data(init_data: str):
+    if not BOT_TOKEN:
+        return None, "telegram_token_not_configured"
+
+    try:
+        parsed = dict(parse_qsl(init_data, keep_blank_values=True))
+    except Exception:
+        return None, "invalid_init_data"
+
+    received_hash = parsed.pop("hash", None)
+
+    if not received_hash:
+        return None, "hash_missing"
+
+    auth_date = parsed.get("auth_date")
+
+    if not auth_date:
+        return None, "auth_date_missing"
+
+    try:
+        auth_timestamp = int(auth_date)
+    except ValueError:
+        return None, "invalid_auth_date"
+
+    if abs(time.time() - auth_timestamp) > 86400:
+        return None, "init_data_expired"
+
+    data_check_string = "\n".join(
+        f"{key}={value}"
+        for key, value in sorted(parsed.items())
+    )
+
+    secret_key = hmac.new(
+        b"WebAppData",
+        BOT_TOKEN.encode(),
+        hashlib.sha256
+    ).digest()
+
+    calculated_hash = hmac.new(
+        secret_key,
+        data_check_string.encode(),
+        hashlib.sha256
+    ).hexdigest()
+
+    if not hmac.compare_digest(calculated_hash, received_hash):
+        return None, "invalid_telegram_signature"
+
+    user_raw = parsed.get("user")
+
+    if not user_raw:
+        return None, "telegram_user_missing"
+
+    try:
+        user = json.loads(user_raw)
+    except json.JSONDecodeError:
+        return None, "invalid_telegram_user"
+
+    return user, None
 
 
 @app.get("/health")
@@ -37,11 +111,48 @@ def health():
     }
 
 
+@app.post("/auth/telegram")
+def telegram_auth(data: TelegramAuth):
+    user, error = validate_telegram_init_data(data.init_data)
+
+    if error:
+        return {
+            "ok": False,
+            "error": error
+        }
+
+    return {
+        "ok": True,
+        "user": {
+            "id": user.get("id"),
+            "first_name": user.get("first_name"),
+            "last_name": user.get("last_name"),
+            "username": user.get("username"),
+            "photo_url": user.get("photo_url")
+        }
+    }
+
+
 @app.post("/game/start")
-def start_game():
+def start_game(x_telegram_init_data: str | None = Header(default=None)):
+    if not x_telegram_init_data:
+        return {
+            "ok": False,
+            "error": "telegram_auth_required"
+        }
+
+    user, error = validate_telegram_init_data(x_telegram_init_data)
+
+    if error:
+        return {
+            "ok": False,
+            "error": error
+        }
+
     game_id = str(uuid.uuid4())
 
     games[game_id] = {
+        "user_id": user.get("id"),
         "level": 1,
         "winning_cards": {
             1: secrets.randbelow(3)
@@ -52,18 +163,46 @@ def start_game():
     return {
         "ok": True,
         "game_id": game_id,
-        "level": 1
+        "level": 1,
+        "user": {
+            "id": user.get("id"),
+            "first_name": user.get("first_name"),
+            "username": user.get("username")
+        }
     }
 
 
 @app.post("/game/choice")
-def choice(data: Choice):
+def choice(
+    data: Choice,
+    x_telegram_init_data: str | None = Header(default=None)
+):
+    if not x_telegram_init_data:
+        return {
+            "ok": False,
+            "error": "telegram_auth_required"
+        }
+
+    user, error = validate_telegram_init_data(x_telegram_init_data)
+
+    if error:
+        return {
+            "ok": False,
+            "error": error
+        }
+
     game = games.get(data.game_id)
 
     if game is None:
         return {
             "ok": False,
             "error": "game_not_found"
+        }
+
+    if game["user_id"] != user.get("id"):
+        return {
+            "ok": False,
+            "error": "game_user_mismatch"
         }
 
     if not 1 <= data.level <= 12 or not 0 <= data.card <= 2:

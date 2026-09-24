@@ -7,6 +7,8 @@ if (tg) {
   tg.expand();
 }
 
+const telegramInitData = tg?.initData || '';
+
 const cards = [...document.querySelectorAll('.card')];
 
 const levelEl = document.getElementById('level');
@@ -129,7 +131,8 @@ async function startGame() {
     const response = await fetch(`${API_URL}/game/start`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': telegramInitData
       },
       body: '{}'
     });
@@ -137,7 +140,7 @@ async function startGame() {
     const data = await response.json();
 
     if (!data.ok) {
-      throw new Error('Не удалось начать игру');
+      throw new Error(data.error || 'Не удалось начать игру');
     }
 
     gameId = data.game_id;
@@ -170,7 +173,8 @@ async function choose(i) {
     const response = await fetch(`${API_URL}/game/choice`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-Telegram-Init-Data': telegramInitData
       },
       body: JSON.stringify({
         game_id: gameId,
@@ -364,10 +368,10 @@ howButton.addEventListener('click', () => {
   closeMenu();
 
   alert(
-    '❓ КАК ИГРАТЬ\\n\\n' +
-    'Выбери одну из трёх карт.\\n' +
-    'Угадаешь — переходишь дальше.\\n' +
-    'Ошибёшься — игра заканчивается.\\n\\n' +
+    '❓ КАК ИГРАТЬ\n\n' +
+    'Выбери одну из трёх карт.\n' +
+    'Угадаешь — переходишь дальше.\n' +
+    'Ошибёшься — игра заканчивается.\n\n' +
     'Пройди все 12 уровней!'
   );
 
