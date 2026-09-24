@@ -354,11 +354,43 @@ ratingButton.addEventListener('click', () => {
 });
 
 
-profileButton.addEventListener('click', () => {
+profileButton.addEventListener('click', async () => {
 
   closeMenu();
 
-  alert('👤 Профиль скоро появится');
+  try {
+
+    const response = await fetch(`${API_URL}/player/profile`, {
+      method: 'GET',
+      headers: {
+        'X-Telegram-Init-Data': telegramInitData
+      }
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(data.error || 'Не удалось загрузить профиль');
+    }
+
+    const player = data.player;
+
+    alert(
+      '👤 ПРОФИЛЬ ИГРОКА\n\n' +
+      'Имя: ' + (player.first_name || 'Игрок') + '\n' +
+      'Игры: ' + player.games_played + '\n' +
+      'Победы: ' + player.wins + '\n' +
+      'Поражения: ' + player.losses + '\n' +
+      'Лучший уровень: ' + player.best_level
+    );
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert('❌ Не удалось загрузить профиль');
+
+  }
 
 });
 
