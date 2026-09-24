@@ -570,3 +570,10 @@ body.victory {
   }
 
 }
+@media (max-width: 600px) {
+
+  .brand {
+    margin-left: 58px;
+  }
+
+}
