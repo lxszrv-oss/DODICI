@@ -10,24 +10,59 @@ import secrets
 import time
 import uuid
 from urllib.parse import parse_qsl
+
 from sqlalchemy import create_engine, text
 
 
 app = FastAPI(title="DODICI API")
+
+
+# ============================================================
+# DATABASE
+# ============================================================
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = None
 
 if DATABASE_URL:
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True
+    )
 
     with engine.connect() as connection:
         connection.execute(text("SELECT 1"))
 
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS games (
+                    game_id VARCHAR(36) PRIMARY KEY,
+                    user_id BIGINT NOT NULL,
+                    level INTEGER NOT NULL DEFAULT 1,
+                    winning_cards TEXT NOT NULL,
+                    finished BOOLEAN NOT NULL DEFAULT FALSE,
+                    won BOOLEAN NOT NULL DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+                """
+            )
+        )
+
+
+# ============================================================
+# LOGGING
+# ============================================================
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("dodici")
 
+
+# ============================================================
+# CORS
+# ============================================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,8 +77,16 @@ app.add_middleware(
 )
 
 
+# ============================================================
+# TELEGRAM
+# ============================================================
+
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 
+
+# ============================================================
+# MODELS
+# ============================================================
 
 class Choice(BaseModel):
     game_id: str
@@ -55,8 +98,9 @@ class TelegramAuth(BaseModel):
     init_data: str
 
 
-games = {}
-
+# ============================================================
+# TELEGRAM AUTH VALIDATION
+# ============================================================
 
 def validate_telegram_init_data(init_data: str):
     if not BOT_TOKEN:
@@ -100,8 +144,6 @@ def validate_telegram_init_data(init_data: str):
         for key, value in sorted(parsed.items())
     )
 
-    # Telegram Mini App validation:
-    # secret_key = HMAC-SHA256(key="WebAppData", message=bot_token)
     secret_key = hmac.new(
         b"WebAppData",
         BOT_TOKEN.encode(),
@@ -114,7 +156,10 @@ def validate_telegram_init_data(init_data: str):
         hashlib.sha256
     ).hexdigest()
 
-    if not hmac.compare_digest(calculated_hash, received_hash):
+    if not hmac.compare_digest(
+        calculated_hash,
+        received_hash
+    ):
         logger.error("Telegram initData signature is invalid")
         return None, "invalid_telegram_signature"
 
@@ -143,17 +188,99 @@ def validate_telegram_init_data(init_data: str):
     return user, None
 
 
-@app.get("/health")
-def health():
+# ============================================================
+# DATABASE HELPERS
+# ============================================================
+
+def require_database():
+    if engine is None:
+        logger.error("DATABASE_URL is not configured")
+        return False
+
+    return True
+
+
+def get_game(game_id: str):
+    if not require_database():
+        return None
+
+    with engine.connect() as connection:
+        result = connection.execute(
+            text(
+                """
+                SELECT
+                    game_id,
+                    user_id,
+                    level,
+                    winning_cards,
+                    finished,
+                    won
+                FROM games
+                WHERE game_id = :game_id
+                """
+            ),
+            {
+                "game_id": game_id
+            }
+        ).mappings().first()
+
+    if result is None:
+        return None
+
+    try:
+        winning_cards = json.loads(result["winning_cards"])
+    except Exception:
+        logger.exception(
+            "Failed to decode winning_cards for game_id=%s",
+            game_id
+        )
+        return None
+
     return {
-        "ok": True,
-        "service": "DODICI"
+        "game_id": result["game_id"],
+        "user_id": result["user_id"],
+        "level": result["level"],
+        "winning_cards": {
+            int(key): value
+            for key, value in winning_cards.items()
+        },
+        "finished": result["finished"],
+        "won": result["won"]
     }
 
 
+# ============================================================
+# HEALTH
+# ============================================================
+
+@app.get("/health")
+def health():
+    database_ok = False
+
+    if engine is not None:
+        try:
+            with engine.connect() as connection:
+                connection.execute(text("SELECT 1"))
+            database_ok = True
+        except Exception:
+            logger.exception("Database health check failed")
+
+    return {
+        "ok": True,
+        "service": "DODICI",
+        "database": database_ok
+    }
+
+
+# ============================================================
+# TELEGRAM AUTH
+# ============================================================
+
 @app.post("/auth/telegram")
 def telegram_auth(data: TelegramAuth):
-    user, error = validate_telegram_init_data(data.init_data)
+    user, error = validate_telegram_init_data(
+        data.init_data
+    )
 
     if error:
         return {
@@ -173,6 +300,10 @@ def telegram_auth(data: TelegramAuth):
     }
 
 
+# ============================================================
+# START GAME
+# ============================================================
+
 @app.post("/game/start")
 def start_game(
     x_telegram_init_data: str | None = Header(default=None)
@@ -183,7 +314,10 @@ def start_game(
     )
 
     if not x_telegram_init_data:
-        logger.error("game/start rejected: Telegram initData missing")
+        logger.error(
+            "game/start rejected: Telegram initData missing"
+        )
+
         return {
             "ok": False,
             "error": "telegram_auth_required"
@@ -204,16 +338,49 @@ def start_game(
             "error": error
         }
 
+    if not require_database():
+        return {
+            "ok": False,
+            "error": "database_not_configured"
+        }
+
     game_id = str(uuid.uuid4())
 
-    games[game_id] = {
-        "user_id": user.get("id"),
-        "level": 1,
-        "winning_cards": {
-            1: secrets.randbelow(3)
-        },
-        "finished": False
+    winning_cards = {
+        1: secrets.randbelow(3)
     }
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO games (
+                    game_id,
+                    user_id,
+                    level,
+                    winning_cards,
+                    finished,
+                    won
+                )
+                VALUES (
+                    :game_id,
+                    :user_id,
+                    :level,
+                    :winning_cards,
+                    :finished,
+                    :won
+                )
+                """
+            ),
+            {
+                "game_id": game_id,
+                "user_id": user.get("id"),
+                "level": 1,
+                "winning_cards": json.dumps(winning_cards),
+                "finished": False,
+                "won": False
+            }
+        )
 
     logger.info(
         "Game started: game_id=%s user_id=%s",
@@ -232,6 +399,10 @@ def start_game(
         }
     }
 
+
+# ============================================================
+# GAME CHOICE
+# ============================================================
 
 @app.post("/game/choice")
 def choice(
@@ -261,7 +432,13 @@ def choice(
             "error": error
         }
 
-    game = games.get(data.game_id)
+    if not require_database():
+        return {
+            "ok": False,
+            "error": "database_not_configured"
+        }
+
+    game = get_game(data.game_id)
 
     if game is None:
         return {
@@ -303,8 +480,25 @@ def choice(
 
     correct = data.card == winning_card
 
+    # --------------------------------------------------------
+    # WRONG CARD
+    # --------------------------------------------------------
+
     if not correct:
-        game["finished"] = True
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    UPDATE games
+                    SET finished = TRUE,
+                        won = FALSE
+                    WHERE game_id = :game_id
+                    """
+                ),
+                {
+                    "game_id": data.game_id
+                }
+            )
 
         return {
             "ok": True,
@@ -313,8 +507,25 @@ def choice(
             "game_over": True
         }
 
+    # --------------------------------------------------------
+    # FINAL LEVEL
+    # --------------------------------------------------------
+
     if data.level == 12:
-        game["finished"] = True
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    UPDATE games
+                    SET finished = TRUE,
+                        won = TRUE
+                    WHERE game_id = :game_id
+                    """
+                ),
+                {
+                    "game_id": data.game_id
+                }
+            )
 
         return {
             "ok": True,
@@ -324,10 +535,33 @@ def choice(
             "won": True
         }
 
-    next_level = data.level + 1
+    # --------------------------------------------------------
+    # NEXT LEVEL
+    # --------------------------------------------------------
 
-    game["level"] = next_level
-    game["winning_cards"][next_level] = secrets.randbelow(3)
+    next_level = data.level + 1
+    next_winning_card = secrets.randbelow(3)
+
+    game["winning_cards"][next_level] = next_winning_card
+
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                UPDATE games
+                SET level = :level,
+                    winning_cards = :winning_cards
+                WHERE game_id = :game_id
+                """
+            ),
+            {
+                "game_id": data.game_id,
+                "level": next_level,
+                "winning_cards": json.dumps(
+                    game["winning_cards"]
+                )
+            }
+        )
 
     return {
         "ok": True,
@@ -335,3 +569,4 @@ def choice(
         "level": next_level,
         "game_over": False
     }
+
