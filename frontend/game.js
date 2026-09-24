@@ -217,3 +217,9 @@ document.getElementById('restart').addEventListener('click', () => {
 });
 
 startGame();
+const mainMenu = document.getElementById('mainMenu');
+const playButton = document.getElementById('playButton');
+
+playButton.addEventListener('click', () => {
+  mainMenu.classList.add('hidden');
+});
