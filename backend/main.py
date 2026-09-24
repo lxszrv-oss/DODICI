@@ -10,9 +10,19 @@ import secrets
 import time
 import uuid
 from urllib.parse import parse_qsl
+from sqlalchemy import create_engine, text
 
 
 app = FastAPI(title="DODICI API")
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = None
+
+if DATABASE_URL:
+    engine = create_engine(DATABASE_URL)
+
+    with engine.connect() as connection:
+        connection.execute(text("SELECT 1"))
 
 
 logging.basicConfig(level=logging.INFO)
