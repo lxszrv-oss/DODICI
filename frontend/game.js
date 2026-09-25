@@ -371,11 +371,13 @@ ratingButton.addEventListener('click', async () => {
         'Игрок';
 
       text +=
-        player.place + '. ' +
-        name +
-        ' — ' +
-        player.points +
-        ' очк.\n';
+  player.place + '. ' +
+  name +
+  ' — ' +
+  player.points +
+  ' очк. • Лучший уровень: ' +
+  player.best_level +
+  '/12\n';
 
     });
 
