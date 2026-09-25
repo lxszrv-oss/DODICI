@@ -24,6 +24,7 @@ button {
 }
 
 .app {
+  position: relative;
   width: 100%;
   max-width: 520px;
   min-height: 100vh;
@@ -39,9 +40,10 @@ header {
   width: 100%;
   min-height: 48px;
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   column-gap: 12px;
+  padding-left: 58px;
 }
 
 .brand {
@@ -178,7 +180,7 @@ header {
 
 /* STATUS */
 
-.status {
+#status {
   width: 100%;
   min-height: 22px;
   margin: 18px 0 0;
@@ -430,7 +432,10 @@ body.victory {
 /* MENU BUTTON */
 
 .menu-button-icon {
-  position: static;
+  position: absolute;
+  top: 20px;
+  left: 18px;
+  z-index: 10;
   width: 46px;
   height: 46px;
   flex-shrink: 0;
@@ -542,8 +547,9 @@ body.victory {
   }
 
   header {
-    grid-template-columns: 46px minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     column-gap: 10px;
+    padding-left: 56px;
   }
 
   .brand {
@@ -556,6 +562,8 @@ body.victory {
   }
 
   .menu-button-icon {
+    top: 14px;
+    left: 18px;
     width: 46px;
     height: 46px;
   }
@@ -584,6 +592,7 @@ body.victory {
 
   header {
     column-gap: 7px;
+    padding-left: 52px;
   }
 
   .brand {
@@ -593,6 +602,10 @@ body.victory {
 
   .prize {
     font-size: 13px;
+  }
+
+  .menu-button-icon {
+    left: 14px;
   }
 
   .cards {
