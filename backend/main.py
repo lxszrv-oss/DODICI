@@ -741,20 +741,21 @@ def game_choice(
 
         with engine.begin() as connection:
 
-            connection.execute(
-                text(
-                    """
-                    UPDATE players
-                    SET
-                        points = points + 1,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE telegram_id = :telegram_id
-                    """
-                ),
-                {
-                    "telegram_id": user.get("id")
-                },
-            )
+    connection.execute(
+        text(
+            """
+            UPDATE players
+            SET
+                points = points + :points_added,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE telegram_id = :telegram_id
+            """
+        ),
+        {
+            "telegram_id": user.get("id"),
+            "points_added": payload.level,
+        },
+    )
 
         # =========================
         # FINAL LEVEL
