@@ -179,7 +179,7 @@ async function choose(i) {
       body: JSON.stringify({
         game_id: gameId,
         level: level,
-        card: i
+        card: String(i)
       })
     });
 
