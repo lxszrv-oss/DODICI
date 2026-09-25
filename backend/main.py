@@ -573,23 +573,7 @@ def start_game(
             uuid.uuid4()
         )
 
-        winning_card = secrets.choice(
-            [
-                "A",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "10",
-                "J",
-                "Q",
-                "K",
-            ]
-        )
+        winning_card = secrets.choice(["0", "1", "2"])
 
         with engine.begin() as connection:
 
@@ -792,7 +776,7 @@ def game_choice(
                 "game_over": True,
                 "won": True,
                 "level": 12,
-                "points_added": 1,
+                "points_added": payload.level,
             }
 
         # =========================
@@ -803,23 +787,7 @@ def game_choice(
             payload.level + 1
         )
 
-        next_winning_card = secrets.choice(
-            [
-                "A",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "10",
-                "J",
-                "Q",
-                "K",
-            ]
-        )
+        next_winning_card = secrets.choice(["0", "1", "2"])
 
         with engine.begin() as connection:
 
@@ -846,7 +814,7 @@ def game_choice(
             "game_over": False,
             "won": False,
             "level": next_level,
-            "points_added": 1,
+            "points_added": payload.level,
         }
 
     except Exception as error:
