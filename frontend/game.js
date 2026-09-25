@@ -918,5 +918,147 @@ howButton.addEventListener("click", () => {
 settingsButton.addEventListener("click", () => {
   closeMenu();
 
-  alert("⚙️ Настройки скоро появятся");
+  const oldSettings = document.getElementById("settingsModal");
+
+  if (oldSettings) {
+    oldSettings.remove();
+  }
+
+  const settingsModal = document.createElement("div");
+
+  settingsModal.id = "settingsModal";
+  settingsModal.className = "settings-modal";
+
+  settingsModal.innerHTML = `
+    <div class="settings-window">
+
+      <button
+        class="settings-close"
+        id="settingsClose"
+        type="button"
+        aria-label="Закрыть настройки"
+      >
+        ×
+      </button>
+
+      <div class="settings-icon">
+        ⚙️
+      </div>
+
+      <div class="settings-title">
+        НАСТРОЙКИ
+      </div>
+
+      <div class="settings-list">
+
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <span class="settings-row-icon">🔊</span>
+
+            <div>
+              <div class="settings-row-title">
+                Звуки
+              </div>
+
+              <div class="settings-row-subtitle">
+                Звуковые эффекты игры
+              </div>
+            </div>
+          </div>
+
+          <button
+            class="settings-toggle active"
+            id="soundToggle"
+            type="button"
+            aria-label="Звуки"
+          >
+            <span></span>
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <span class="settings-row-icon">📳</span>
+
+            <div>
+              <div class="settings-row-title">
+                Вибрация
+              </div>
+
+              <div class="settings-row-subtitle">
+                Тактильный отклик
+              </div>
+            </div>
+          </div>
+
+          <button
+            class="settings-toggle active"
+            id="vibrationToggle"
+            type="button"
+            aria-label="Вибрация"
+          >
+            <span></span>
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <span class="settings-row-icon">🌙</span>
+
+            <div>
+              <div class="settings-row-title">
+                Тема
+              </div>
+
+              <div class="settings-row-subtitle">
+                Тёмная тема
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-theme">
+            DARK
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(settingsModal);
+
+  requestAnimationFrame(() => {
+    settingsModal.classList.add("visible");
+  });
+
+  const closeSettings = () => {
+    settingsModal.classList.remove("visible");
+
+    setTimeout(() => {
+      settingsModal.remove();
+    }, 300);
+  };
+
+  document
+    .getElementById("settingsClose")
+    .addEventListener("click", closeSettings);
+
+  settingsModal.addEventListener("click", (event) => {
+    if (event.target === settingsModal) {
+      closeSettings();
+    }
+  });
+
+  document
+    .getElementById("soundToggle")
+    .addEventListener("click", (event) => {
+      event.currentTarget.classList.toggle("active");
+    });
+
+  document
+    .getElementById("vibrationToggle")
+    .addEventListener("click", (event) => {
+      event.currentTarget.classList.toggle("active");
+    });
 });
