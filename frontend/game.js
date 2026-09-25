@@ -1050,15 +1050,42 @@ settingsButton.addEventListener("click", () => {
     }
   });
 
-  document
-    .getElementById("soundToggle")
-    .addEventListener("click", (event) => {
-      event.currentTarget.classList.toggle("active");
-    });
+  const soundToggle = document.getElementById("soundToggle");
+  const vibrationToggle = document.getElementById("vibrationToggle");
 
-  document
-    .getElementById("vibrationToggle")
-    .addEventListener("click", (event) => {
-      event.currentTarget.classList.toggle("active");
-    });
+  const soundEnabled =
+    localStorage.getItem("dodici_sound") !== "off";
+
+  const vibrationEnabled =
+    localStorage.getItem("dodici_vibration") !== "off";
+
+  soundToggle.classList.toggle(
+    "active",
+    soundEnabled
+  );
+
+  vibrationToggle.classList.toggle(
+    "active",
+    vibrationEnabled
+  );
+
+  soundToggle.addEventListener("click", () => {
+    const enabled =
+      soundToggle.classList.toggle("active");
+
+    localStorage.setItem(
+      "dodici_sound",
+      enabled ? "on" : "off"
+    );
+  });
+
+  vibrationToggle.addEventListener("click", () => {
+    const enabled =
+      vibrationToggle.classList.toggle("active");
+
+    localStorage.setItem(
+      "dodici_vibration",
+      enabled ? "on" : "off"
+    );
+  });
 });
