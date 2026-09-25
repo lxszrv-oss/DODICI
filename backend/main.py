@@ -720,26 +720,26 @@ def game_choice(
             }
 
         # =========================
-        # CORRECT CARD = +1 POINT
+        # CORRECT CARD = LEVEL POINTS
         # =========================
 
         with engine.begin() as connection:
 
-    connection.execute(
-        text(
-            """
-            UPDATE players
-            SET
-                points = points + :points_added,
-                updated_at = CURRENT_TIMESTAMP
-            WHERE telegram_id = :telegram_id
-            """
-        ),
-        {
-            "telegram_id": user.get("id"),
-            "points_added": payload.level,
-        },
-    )
+            connection.execute(
+                text(
+                    """
+                    UPDATE players
+                    SET
+                        points = points + :points_added,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE telegram_id = :telegram_id
+                    """
+                ),
+                {
+                    "telegram_id": user.get("id"),
+                    "points_added": payload.level,
+                },
+            )
 
         # =========================
         # FINAL LEVEL
