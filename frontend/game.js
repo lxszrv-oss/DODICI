@@ -749,6 +749,8 @@ profileButton.addEventListener("click", async () => {
   closeMenu();
 
   try {
+    profileButton.disabled = true;
+
     const response = await fetch(
       `${API_URL}/player/profile`,
       {
@@ -769,27 +771,135 @@ profileButton.addEventListener("click", async () => {
 
     const player = data.player;
 
-    alert(
-      "👤 ПРОФИЛЬ ИГРОКА\n\n" +
-      "Имя: " +
-      (player.first_name || "Игрок") +
-      "\n" +
-      "Игры: " +
-      player.games_played +
-      "\n" +
-      "Победы: " +
-      player.wins +
-      "\n" +
-      "Поражения: " +
-      player.losses +
-      "\n" +
-      "Лучший уровень: " +
-      player.best_level
+    const oldProfile = document.getElementById(
+      "profileModal"
     );
+
+    if (oldProfile) {
+      oldProfile.remove();
+    }
+
+    const profileModal = document.createElement("div");
+
+    profileModal.id = "profileModal";
+    profileModal.className = "profile-modal";
+
+    profileModal.innerHTML = `
+      <div class="profile-window">
+
+        <button
+          class="profile-close"
+          id="profileClose"
+          type="button"
+          aria-label="Закрыть профиль"
+        >
+          ×
+        </button>
+
+        <div class="profile-avatar">
+          👤
+        </div>
+
+        <div class="profile-title">
+          ПРОФИЛЬ
+        </div>
+
+        <div class="profile-name">
+          ${escapeHtml(player.first_name || "Игрок")}
+        </div>
+
+        <div class="profile-stats">
+
+          <div class="profile-stat">
+            <div class="profile-stat-icon">
+              🎮
+            </div>
+
+            <div class="profile-stat-value">
+              ${escapeHtml(player.games_played)}
+            </div>
+
+            <div class="profile-stat-label">
+              ИГР
+            </div>
+          </div>
+
+          <div class="profile-stat">
+            <div class="profile-stat-icon">
+              🏆
+            </div>
+
+            <div class="profile-stat-value">
+              ${escapeHtml(player.wins)}
+            </div>
+
+            <div class="profile-stat-label">
+              ПОБЕД
+            </div>
+          </div>
+
+          <div class="profile-stat">
+            <div class="profile-stat-icon">
+              💥
+            </div>
+
+            <div class="profile-stat-value">
+              ${escapeHtml(player.losses)}
+            </div>
+
+            <div class="profile-stat-label">
+              ПОРАЖЕНИЙ
+            </div>
+          </div>
+
+        </div>
+
+        <div class="profile-best">
+
+          <div class="profile-best-label">
+            ЛУЧШИЙ УРОВЕНЬ
+          </div>
+
+          <div class="profile-best-value">
+            ${escapeHtml(player.best_level)}
+            <span>/ 12</span>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    document.body.appendChild(profileModal);
+
+    requestAnimationFrame(() => {
+      profileModal.classList.add("visible");
+    });
+
+    const closeProfile = () => {
+      profileModal.classList.remove("visible");
+
+      setTimeout(() => {
+        profileModal.remove();
+      }, 300);
+    };
+
+    document
+      .getElementById("profileClose")
+      .addEventListener("click", closeProfile);
+
+    profileModal.addEventListener("click", (event) => {
+      if (event.target === profileModal) {
+        closeProfile();
+      }
+    });
+
   } catch (error) {
     console.error(error);
 
     alert("❌ Не удалось загрузить профиль");
+  } finally {
+    profileButton.disabled = false;
   }
 });
 
