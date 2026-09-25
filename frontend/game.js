@@ -39,6 +39,17 @@ let locked = false;
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(type) {
+
+  const soundEnabled =
+    localStorage.getItem("dodici_sound") !== "off";
+
+  if (!soundEnabled) {
+    return;
+  }
+
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
   if (audioCtx.state === "suspended") {
     audioCtx.resume();
   }
