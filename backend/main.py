@@ -847,6 +847,47 @@ def game_choice(
 
 
 # =========================
+
+# RATING
+
+@app.get("/rating")
+def rating():
+    try:
+        with engine.begin() as connection:
+            result = connection.execute(
+                text("""
+                    SELECT telegram_id, username, first_name, points, best_level
+                    FROM players
+                    ORDER BY points DESC, best_level DESC
+                    LIMIT 100
+                """)
+            )
+
+            players = []
+
+            for index, row in enumerate(result, start=1):
+                players.append({
+                    "place": index,
+                    "telegram_id": row.telegram_id,
+                    "username": row.username,
+                    "first_name": row.first_name,
+                    "points": row.points,
+                    "best_level": row.best_level,
+                })
+
+        return {
+            "ok": True,
+            "rating": players
+        }
+
+    except Exception as error:
+        logging.exception("Rating request failed")
+
+        return {
+            "ok": False,
+            "error": str(error)
+        }
+
 # RUN
 # =========================
 

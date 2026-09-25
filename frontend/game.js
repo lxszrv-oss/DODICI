@@ -205,7 +205,6 @@ async function choose(i) {
 
       statusEl.textContent = 'Правильно! Следующий уровень…';
 
-
       if (data.won) {
         finish(
           'ТЫ ПРОШЁЛ DODICI',
@@ -214,7 +213,6 @@ async function choose(i) {
 
         return;
       }
-
 
       setTimeout(() => {
 
@@ -243,7 +241,6 @@ async function choose(i) {
         hud();
 
       }, 650);
-
 
     } else {
 
@@ -343,16 +340,59 @@ menuOverlay.addEventListener('click', () => {
 });
 
 
-// MENU ITEMS
+// RATING
 
-ratingButton.addEventListener('click', () => {
+ratingButton.addEventListener('click', async () => {
 
   closeMenu();
 
-  alert('🏆 Рейтинг скоро появится');
+  try {
+
+    const response = await fetch(`${API_URL}/rating`);
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(data.error || 'Не удалось загрузить рейтинг');
+    }
+
+    if (!data.rating.length) {
+      alert('🏆 Рейтинг пока пуст');
+      return;
+    }
+
+    let text = '🏆 РЕЙТИНГ DODICI\n\n';
+
+    data.rating.forEach(player => {
+
+      const name =
+        player.first_name ||
+        player.username ||
+        'Игрок';
+
+      text +=
+        player.place + '. ' +
+        name +
+        ' — ' +
+        player.points +
+        ' очк.\n';
+
+    });
+
+    alert(text);
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert('❌ Не удалось загрузить рейтинг');
+
+  }
 
 });
 
+
+// PROFILE
 
 profileButton.addEventListener('click', async () => {
 
@@ -395,6 +435,8 @@ profileButton.addEventListener('click', async () => {
 });
 
 
+// HOW TO PLAY
+
 howButton.addEventListener('click', () => {
 
   closeMenu();
@@ -409,6 +451,8 @@ howButton.addEventListener('click', () => {
 
 });
 
+
+// SETTINGS
 
 settingsButton.addEventListener('click', () => {
 
