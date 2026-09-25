@@ -33,28 +33,41 @@ button {
   flex-direction: column;
 }
 
+/* HEADER */
+
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   width: 100%;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
 }
 
 .brand {
+  min-width: 0;
+  margin: 0;
+  text-align: center;
   font-weight: 900;
   letter-spacing: 0.16em;
   font-size: 24px;
+  white-space: nowrap;
 }
 
 .prize {
+  margin: 0;
   font-weight: 800;
   color: #b9bbc4;
+  white-space: nowrap;
 }
 
+/* HUD */
+
 .hud {
+  width: 100%;
   display: flex;
   justify-content: space-between;
-  width: 100%;
+  align-items: center;
   margin-top: 26px;
   padding: 12px 14px;
   border: 1px solid #242631;
@@ -78,6 +91,8 @@ header {
   font-size: 15px;
 }
 
+/* HERO */
+
 .hero {
   width: 100%;
   text-align: center;
@@ -85,20 +100,23 @@ header {
 }
 
 .hero p {
+  margin: 0 0 9px;
   font-size: 11px;
   letter-spacing: 0.18em;
   color: #8f93a1;
-  margin: 0 0 9px;
 }
 
 .hero h1 {
-  font-size: 35px;
   margin: 0 0 10px;
+  font-size: 35px;
+  line-height: 1.15;
 }
 
 .hero small {
   color: #9b9eaa;
 }
+
+/* CARDS */
 
 .cards {
   width: 100%;
@@ -158,6 +176,8 @@ header {
     0 0 45px rgba(255, 0, 0, 0.8);
 }
 
+/* STATUS */
+
 .status {
   width: 100%;
   min-height: 22px;
@@ -167,11 +187,13 @@ header {
   font-size: 13px;
 }
 
+/* END */
+
 .end {
   width: 100%;
-  text-align: center;
   margin-top: 18px;
   padding: 22px;
+  text-align: center;
   border: 1px solid #2b2e39;
   border-radius: 18px;
   background: #101118;
@@ -202,14 +224,18 @@ header {
   cursor: pointer;
 }
 
+/* FOOTER */
+
 footer {
   width: 100%;
-  text-align: center;
   margin-top: auto;
   padding-top: 28px;
+  text-align: center;
   color: #555966;
   font-size: 11px;
 }
+
+/* VICTORY */
 
 @keyframes victoryCard {
   0% {
@@ -286,6 +312,8 @@ body.victory {
   }
 }
 
+/* CARD ENTER */
+
 .card-enter {
   animation: cardEnter 0.55s cubic-bezier(0.17, 0.89, 0.32, 1.49) both;
 }
@@ -319,6 +347,8 @@ body.victory {
   }
 }
 
+/* START MENU */
+
 .main-menu {
   position: fixed;
   inset: 0;
@@ -329,12 +359,13 @@ body.victory {
   justify-content: center;
   padding: 30px 20px;
   text-align: center;
-  background: radial-gradient(
-    circle at center,
-    #24133d 0%,
-    #090711 55%,
-    #050509 100%
-  );
+  background:
+    radial-gradient(
+      circle at center,
+      #24133d 0%,
+      #090711 55%,
+      #050509 100%
+    );
   cursor: pointer;
   transition:
     opacity 0.45s ease,
@@ -396,13 +427,13 @@ body.victory {
   }
 }
 
+/* MENU BUTTON */
+
 .menu-button-icon {
-  position: absolute;
-  top: 18px;
-  left: 18px;
-  z-index: 20;
+  position: static;
   width: 46px;
   height: 46px;
+  flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 13px;
   background: rgba(255, 255, 255, 0.08);
@@ -423,6 +454,8 @@ body.victory {
   transform: scale(0.92);
 }
 
+/* SIDE MENU */
+
 .side-menu {
   position: fixed;
   top: 0;
@@ -431,11 +464,12 @@ body.victory {
   z-index: 2000;
   width: min(290px, 82vw);
   padding: 30px 20px;
-  background: linear-gradient(
-    180deg,
-    #17121f 0%,
-    #090711 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      #17121f 0%,
+      #090711 100%
+    );
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   transform: translateX(-105%);
   transition: transform 0.3s cubic-bezier(0.17, 0.89, 0.32, 1.2);
@@ -479,6 +513,8 @@ body.victory {
   transform: scale(0.97);
 }
 
+/* OVERLAY */
+
 .menu-overlay {
   position: fixed;
   inset: 0;
@@ -498,20 +534,36 @@ body.victory {
   pointer-events: auto;
 }
 
+/* MOBILE */
+
 @media (max-width: 600px) {
+  .app {
+    padding: 14px 18px 28px;
+  }
+
+  header {
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    column-gap: 10px;
+  }
+
+  .brand {
+    font-size: 23px;
+    letter-spacing: 0.12em;
+  }
+
+  .prize {
+    font-size: 15px;
+  }
+
+  .menu-button-icon {
+    width: 46px;
+    height: 46px;
+  }
+
   .side-menu {
     top: 78px;
     bottom: 0;
     border-top-right-radius: 18px;
-  }
-
-  .menu-button-icon {
-    top: 14px;
-    left: 14px;
-  }
-
-  .brand {
-    margin-left: 80px;
   }
 
   .main-menu h1 {
@@ -520,6 +572,35 @@ body.victory {
   }
 
   .hero h1 {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 380px) {
+  .app {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  header {
+    column-gap: 7px;
+  }
+
+  .brand {
+    font-size: 20px;
+    letter-spacing: 0.08em;
+  }
+
+  .prize {
+    font-size: 13px;
+  }
+
+  .cards {
+    gap: 9px;
+  }
+
+  .card {
+    border-radius: 15px;
     font-size: 30px;
   }
 }
