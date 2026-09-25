@@ -21,6 +21,7 @@ button {
 }
 
 .app {
+  position: relative;
   width: min(100%, 520px);
   min-height: 100vh;
   padding: 20px 18px 28px;
@@ -32,6 +33,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 46px;
 }
 
 .brand {
@@ -85,11 +87,13 @@ header {
 
 .hero h1 {
   font-size: 35px;
+  line-height: 1.15;
   margin: 0 0 10px;
 }
 
 .hero small {
   color: #9b9eaa;
+  line-height: 1.5;
 }
 
 .cards {
@@ -197,6 +201,8 @@ footer {
   font-size: 11px;
 }
 
+/* Victory animation */
+
 @keyframes victoryCard {
   0% {
     transform: scale(1);
@@ -223,6 +229,8 @@ footer {
     filter: brightness(1);
   }
 }
+
+/* Defeat animation */
 
 @keyframes defeatCard {
   0% {
@@ -272,6 +280,8 @@ body.victory {
   }
 }
 
+/* New level animation */
+
 .card-enter {
   animation: cardEnter 0.55s cubic-bezier(0.17, 0.89, 0.32, 1.49) both;
 }
@@ -305,7 +315,7 @@ body.victory {
   }
 }
 
-/* START SCREEN */
+/* Start screen */
 
 .main-menu {
   position: fixed;
@@ -380,7 +390,7 @@ body.victory {
   }
 }
 
-/* SIDE MENU */
+/* Side menu button */
 
 .menu-button-icon {
   position: absolute;
@@ -409,6 +419,8 @@ body.victory {
   transform: scale(0.92);
 }
 
+/* Side menu */
+
 .side-menu {
   position: fixed;
   top: 0;
@@ -417,11 +429,12 @@ body.victory {
   z-index: 2000;
   width: min(290px, 82vw);
   padding: 30px 20px;
-  background: linear-gradient(
-    180deg,
-    #17121f 0%,
-    #090711 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      #17121f 0%,
+      #090711 100%
+    );
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   transform: translateX(-105%);
   transition: transform 0.3s cubic-bezier(0.17, 0.89, 0.32, 1.2);
@@ -465,7 +478,7 @@ body.victory {
   transform: scale(0.97);
 }
 
-/* MENU OVERLAY */
+/* Menu overlay */
 
 .menu-overlay {
   position: fixed;
@@ -484,7 +497,7 @@ body.victory {
   visibility: visible;
 }
 
-/* RATING */
+/* Rating modal */
 
 #ratingModal {
   position: fixed;
@@ -601,9 +614,11 @@ body.victory {
   cursor: pointer;
 }
 
-/* MOBILE */
-
 @media (max-width: 600px) {
+  .app {
+    padding: 18px 16px 24px;
+  }
+
   .side-menu {
     top: 78px;
     bottom: 0;
@@ -619,12 +634,37 @@ body.victory {
     margin-left: 80px;
   }
 
+  .prize {
+    font-size: 14px;
+  }
+
+  .hud {
+    margin-top: 22px;
+  }
+
+  .hero {
+    padding: 30px 4px 24px;
+  }
+
+  .hero h1 {
+    font-size: 30px;
+  }
+
+  .cards {
+    gap: 10px;
+  }
+
+  .card {
+    font-size: 30px;
+  }
+
   .main-menu h1 {
     font-size: 48px;
     letter-spacing: 8px;
   }
 
-  .hero h1 {
-    font-size: 30px;
+  .rating-content {
+    max-height: 88vh;
+    padding: 20px 14px;
   }
 }
