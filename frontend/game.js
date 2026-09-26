@@ -117,6 +117,29 @@ function hud() {
   levelEl.textContent = String(level).padStart(2, "0") + " / 12";
   attemptEl.textContent = attempt;
 }
+async function loadPlayerAttempts() {
+  try {
+    const response = await fetch(`${API_URL}/player/profile`, {
+      headers: {
+        "X-Telegram-Init-Data": telegramInitData
+      }
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(data.error || "Не удалось загрузить профиль");
+    }
+
+    attempt = data.player.attempts;
+
+    hud();
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+loadPlayerAttempts();
 
 function reset() {
   cards.forEach((card, i) => {
@@ -145,11 +168,23 @@ async function startGame() {
     const data = await response.json();
 
     if (!data.ok) {
-      throw new Error(data.error || "Не удалось начать игру");
+      if (data.error === "No attempts left") {
+        statusEl.textContent = "Попытки закончились";
+        finish(
+          "НЕТ ПОПЫТОК",
+          "Подожди пополнения попыток."
+        );
+        return;
+      }
+
+      throw new Error(
+        data.error || "Не удалось начать игру"
+      );
     }
 
     gameId = data.game_id;
     level = data.level;
+    attempt = data.attempts;
     locked = false;
 
     reset();
@@ -159,9 +194,12 @@ async function startGame() {
     statusEl.textContent = "Выбери одну карту";
 
     hud();
+
   } catch (error) {
     console.error(error);
-    statusEl.textContent = "Ошибка соединения с сервером";
+
+    statusEl.textContent =
+      "Ошибка соединения с сервером";
   }
 }
 
@@ -220,12 +258,8 @@ async function choose(i) {
 
       setTimeout(() => {
         level = data.level;
-
-        playSound("level");
-
-        attempt++;
-
-        reset();
+playSound("level");
+reset();
 
         cards.forEach(card => {
           card.classList.remove("card-enter");
@@ -273,7 +307,6 @@ cards.forEach(card => {
 });
 
 document.getElementById("restart").addEventListener("click", () => {
-  attempt++;
   startGame();
 });
 

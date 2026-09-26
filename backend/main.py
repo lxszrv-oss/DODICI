@@ -92,6 +92,14 @@ with engine.begin() as connection:
             """
         )
     )
+    connection.execute(
+    text(
+        """
+        ALTER TABLE players
+        ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 15
+        """
+    )
+)
 
 
 # =========================
@@ -533,6 +541,7 @@ def player_profile(
                 "best_level": player[
                     "best_level"
                 ],
+                "attempts": player["attempts"],
             },
         }
 
@@ -573,9 +582,44 @@ def start_game(
             uuid.uuid4()
         )
 
-        winning_card = secrets.choice(["0", "1", "2"])
+        winning_card = secrets.choice(
+            [
+                "0",
+                "1",
+                "2",
+            ]
+        )
 
         with engine.begin() as connection:
+
+            attempt_result = connection.execute(
+                text(
+                    """
+                    UPDATE players
+                    SET
+                        attempts = attempts - 1,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE telegram_id = :telegram_id
+                      AND attempts > 0
+                    RETURNING attempts
+                    """
+                ),
+                {
+                    "telegram_id": user.get("id"),
+                },
+            )
+
+            remaining_attempts = (
+                attempt_result.scalar()
+            )
+
+            if remaining_attempts is None:
+
+                return {
+                    "ok": False,
+                    "error": "No attempts left",
+                    "attempts": 0,
+                }
 
             connection.execute(
                 text(
@@ -610,6 +654,7 @@ def start_game(
             "game_id": game_id,
             "level": 1,
             "winning_card": winning_card,
+            "attempts": remaining_attempts,
         }
 
     except Exception as error:
