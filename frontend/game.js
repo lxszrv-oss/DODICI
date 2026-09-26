@@ -808,8 +808,15 @@ profileButton.addEventListener("click", async () => {
         </button>
 
         <div class="profile-avatar">
-          👤
-        </div>
+  ${
+    window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url
+      ? `<img
+          src="${escapeHtml(window.Telegram.WebApp.initDataUnsafe.user.photo_url)}"
+          alt="Аватар"
+        >`
+      : "👤"
+  }
+</div>
 
         <div class="profile-title">
           ПРОФИЛЬ
