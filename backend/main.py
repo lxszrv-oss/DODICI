@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
 import hashlib
 import hmac
 import json
@@ -9,14 +10,15 @@ import os
 import secrets
 import time
 import uuid
+
 from urllib.parse import parse_qsl
 
 from sqlalchemy import create_engine, text
 
 
-# =========================
+# ============================================================
 # DATABASE
-# =========================
+# ============================================================
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -42,6 +44,10 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
+
+# ============================================================
+# DATABASE SETUP
+# ============================================================
 
 with engine.begin() as connection:
 
@@ -72,13 +78,24 @@ with engine.begin() as connection:
                 telegram_id BIGINT PRIMARY KEY,
                 username VARCHAR(255),
                 first_name VARCHAR(255),
+
                 games_played INTEGER NOT NULL DEFAULT 0,
                 wins INTEGER NOT NULL DEFAULT 0,
                 losses INTEGER NOT NULL DEFAULT 0,
+
                 points INTEGER NOT NULL DEFAULT 0,
                 best_level INTEGER NOT NULL DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+                attempts INTEGER NOT NULL DEFAULT 15,
+
+                last_attempt_refill TIMESTAMP
+                    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+                created_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP,
+
+                updated_at TIMESTAMP
+                    DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
@@ -88,33 +105,36 @@ with engine.begin() as connection:
         text(
             """
             ALTER TABLE players
-            ADD COLUMN IF NOT EXISTS points INTEGER NOT NULL DEFAULT 0
+            ADD COLUMN IF NOT EXISTS points
+            INTEGER NOT NULL DEFAULT 0
             """
         )
     )
+
     connection.execute(
-    text(
-        """
-        ALTER TABLE players
-        ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 15
-        """
+        text(
+            """
+            ALTER TABLE players
+            ADD COLUMN IF NOT EXISTS attempts
+            INTEGER NOT NULL DEFAULT 15
+            """
+        )
     )
-)
-connection.execute(
-    text(
-        """
-        ALTER TABLE players
-        ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        """
+
+    connection.execute(
+        text(
+            """
+            ALTER TABLE players
+            ADD COLUMN IF NOT EXISTS last_attempt_refill
+            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+            """
+        )
     )
-)
 
 
-
-
-# =========================
+# ============================================================
 # APP
-# =========================
+# ============================================================
 
 logging.basicConfig(
     level=logging.INFO
@@ -123,7 +143,6 @@ logging.basicConfig(
 app = FastAPI(
     title="DODICI"
 )
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -134,9 +153,9 @@ app.add_middleware(
 )
 
 
-# =========================
+# ============================================================
 # TELEGRAM
-# =========================
+# ============================================================
 
 BOT_TOKEN = os.getenv(
     "TELEGRAM_BOT_TOKEN"
@@ -148,9 +167,18 @@ if not BOT_TOKEN:
     )
 
 
-# =========================
+# ============================================================
+# GAME SETTINGS
+# ============================================================
+
+ATTEMPTS_PER_HOUR = 5
+
+SECONDS_PER_ATTEMPT = 60 * 60
+
+
+# ============================================================
 # MODELS
-# =========================
+# ============================================================
 
 class Choice(BaseModel):
     game_id: str
@@ -162,12 +190,11 @@ class TelegramAuth(BaseModel):
     init_data: str
 
 
-# =========================
-# DATABASE HELPERS
-# =========================
+# ============================================================
+# HELPERS
+# ============================================================
 
 def require_database():
-
     if not DATABASE_URL:
         raise RuntimeError(
             "Database is not configured"
@@ -196,12 +223,16 @@ def ensure_player(user):
                 INSERT INTO players (
                     telegram_id,
                     username,
-                    first_name
+                    first_name,
+                    attempts,
+                    last_attempt_refill
                 )
                 VALUES (
                     :telegram_id,
                     :username,
-                    :first_name
+                    :first_name,
+                    15,
+                    CURRENT_TIMESTAMP
                 )
                 ON CONFLICT (telegram_id)
                 DO UPDATE SET
@@ -218,49 +249,68 @@ def ensure_player(user):
         )
 
 
-def restore_attempts(telegram_id):
+def refill_attempts(telegram_id):
 
     require_database()
 
     with engine.begin() as connection:
 
-        connection.execute(
+        result = connection.execute(
             text(
                 """
                 UPDATE players
                 SET
-                    attempts = LEAST(
-                        attempts + FLOOR(
-                            EXTRACT(
-                                EPOCH FROM (
-                                    CURRENT_TIMESTAMP - last_attempt_at
-                                )
-                            ) / 3600
-                        )::INTEGER,
-                        15
-                    ),
-                    last_attempt_at =
-                        CASE
-                            WHEN attempts < 15
-                            THEN CURRENT_TIMESTAMP
-                            ELSE last_attempt_at
-                        END,
+                    attempts =
+                        attempts
+                        +
+                        (
+                            FLOOR(
+                                EXTRACT(
+                                    EPOCH FROM
+                                    (
+                                        CURRENT_TIMESTAMP
+                                        - last_attempt_refill
+                                    )
+                                ) / 3600
+                            )::INTEGER
+                            * :attempts_per_hour
+                        ),
+
+                    last_attempt_refill =
+                        last_attempt_refill
+                        +
+                        (
+                            FLOOR(
+                                EXTRACT(
+                                    EPOCH FROM
+                                    (
+                                        CURRENT_TIMESTAMP
+                                        - last_attempt_refill
+                                    )
+                                ) / 3600
+                            )::INTEGER
+                            * INTERVAL '1 hour'
+                        ),
+
                     updated_at = CURRENT_TIMESTAMP
+
                 WHERE telegram_id = :telegram_id
-                  AND attempts < 15
+
+                RETURNING attempts
                 """
             ),
             {
-                "telegram_id": telegram_id
+                "telegram_id": telegram_id,
+                "attempts_per_hour": ATTEMPTS_PER_HOUR,
             },
         )
+
+        return result.scalar()
 
 
 def get_player(telegram_id):
 
     require_database()
-
-    restore_attempts(telegram_id)
 
     with engine.begin() as connection:
 
@@ -277,6 +327,7 @@ def get_player(telegram_id):
                     points,
                     best_level,
                     attempts,
+                    last_attempt_refill,
                     created_at,
                     updated_at
                 FROM players
@@ -294,7 +345,7 @@ def get_player(telegram_id):
 def update_player_after_game(
     telegram_id,
     won,
-    level
+    level,
 ):
 
     require_database()
@@ -306,16 +357,26 @@ def update_player_after_game(
                 """
                 UPDATE players
                 SET
-                    games_played = games_played + 1,
-                    wins = wins + :wins,
-                    losses = losses + :losses,
-                    best_level = GREATEST(
-                        best_level,
-                        attempts,
-                        :level
-                    ),
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE telegram_id = :telegram_id
+                    games_played =
+                        games_played + 1,
+
+                    wins =
+                        wins + :wins,
+
+                    losses =
+                        losses + :losses,
+
+                    best_level =
+                        GREATEST(
+                            best_level,
+                            :level
+                        ),
+
+                    updated_at =
+                        CURRENT_TIMESTAMP
+
+                WHERE telegram_id =
+                    :telegram_id
                 """
             ),
             {
@@ -355,13 +416,11 @@ def get_game(game_id):
     return result
 
 
-# =========================
+# ============================================================
 # TELEGRAM AUTH
-# =========================
+# ============================================================
 
-def validate_telegram_init_data(
-    init_data: str
-):
+def validate_telegram_init_data(init_data: str):
 
     if not init_data:
         raise ValueError(
@@ -371,13 +430,13 @@ def validate_telegram_init_data(
     parsed = dict(
         parse_qsl(
             init_data,
-            keep_blank_values=True
+            keep_blank_values=True,
         )
     )
 
     received_hash = parsed.pop(
         "hash",
-        None
+        None,
     )
 
     if not received_hash:
@@ -406,7 +465,7 @@ def validate_telegram_init_data(
 
     if not hmac.compare_digest(
         calculated_hash,
-        received_hash
+        received_hash,
     ):
         raise ValueError(
             "Invalid Telegram init data"
@@ -419,10 +478,7 @@ def validate_telegram_init_data(
     if auth_date:
 
         try:
-
-            auth_time = int(
-                auth_date
-            )
+            auth_time = int(auth_date)
 
             if time.time() - auth_time > 86400:
                 raise ValueError(
@@ -430,7 +486,6 @@ def validate_telegram_init_data(
                 )
 
         except ValueError:
-
             raise ValueError(
                 "Invalid auth_date"
             )
@@ -464,9 +519,9 @@ def validate_telegram_init_data(
     return user
 
 
-# =========================
+# ============================================================
 # HEALTH
-# =========================
+# ============================================================
 
 @app.get("/health")
 def health():
@@ -476,7 +531,6 @@ def health():
     try:
 
         with engine.begin() as connection:
-
             connection.execute(
                 text("SELECT 1")
             )
@@ -494,13 +548,26 @@ def health():
     }
 
 
-# =========================
+# ============================================================
+# ROOT
+# ============================================================
+
+@app.get("/")
+def root():
+
+    return {
+        "ok": True,
+        "service": "DODICI",
+    }
+
+
+# ============================================================
 # TELEGRAM AUTH
-# =========================
+# ============================================================
 
 @app.post("/auth/telegram")
 def auth_telegram(
-    payload: TelegramAuth
+    payload: TelegramAuth,
 ):
 
     try:
@@ -509,8 +576,10 @@ def auth_telegram(
             payload.init_data
         )
 
-        ensure_player(
-            user
+        ensure_player(user)
+
+        refill_attempts(
+            user.get("id")
         )
 
         return {
@@ -534,9 +603,9 @@ def auth_telegram(
         }
 
 
-# =========================
+# ============================================================
 # PLAYER PROFILE
-# =========================
+# ============================================================
 
 @app.get("/player/profile")
 def player_profile(
@@ -551,8 +620,10 @@ def player_profile(
             x_telegram_init_data
         )
 
-        ensure_player(
-            user
+        ensure_player(user)
+
+        refill_attempts(
+            user.get("id")
         )
 
         player = get_player(
@@ -569,31 +640,32 @@ def player_profile(
         return {
             "ok": True,
             "player": {
-                "telegram_id": player[
-                    "telegram_id"
-                ],
-                "username": player[
-                    "username"
-                ],
-                "first_name": player[
-                    "first_name"
-                ],
-                "games_played": player[
-                    "games_played"
-                ],
-                "wins": player[
-                    "wins"
-                ],
-                "losses": player[
-                    "losses"
-                ],
-                "points": player[
-                    "points"
-                ],
-                "best_level": player[
-                    "best_level"
-                ],
-                "attempts": player["attempts"],
+                "telegram_id":
+                    player["telegram_id"],
+
+                "username":
+                    player["username"],
+
+                "first_name":
+                    player["first_name"],
+
+                "games_played":
+                    player["games_played"],
+
+                "wins":
+                    player["wins"],
+
+                "losses":
+                    player["losses"],
+
+                "points":
+                    player["points"],
+
+                "best_level":
+                    player["best_level"],
+
+                "attempts":
+                    player["attempts"],
             },
         }
 
@@ -609,9 +681,9 @@ def player_profile(
         }
 
 
-# =========================
+# ============================================================
 # START GAME
-# =========================
+# ============================================================
 
 @app.post("/game/start")
 def start_game(
@@ -626,8 +698,14 @@ def start_game(
             x_telegram_init_data
         )
 
-        ensure_player(
-            user
+        ensure_player(user)
+
+        telegram_id = user.get("id")
+
+        # Начисляем все накопившиеся
+        # полные часы.
+        refill_attempts(
+            telegram_id
         )
 
         game_id = str(
@@ -648,17 +726,25 @@ def start_game(
                 text(
                     """
                     UPDATE players
+
                     SET
-    attempts = attempts - 1,
-    last_attempt_at = CURRENT_TIMESTAMP,
-    updated_at = CURRENT_TIMESTAMP
-                    WHERE telegram_id = :telegram_id
-                      AND attempts > 0
+                        attempts =
+                            attempts - 1,
+
+                        updated_at =
+                            CURRENT_TIMESTAMP
+
+                    WHERE telegram_id =
+                        :telegram_id
+
+                    AND attempts > 0
+
                     RETURNING attempts
                     """
                 ),
                 {
-                    "telegram_id": user.get("id"),
+                    "telegram_id":
+                        telegram_id,
                 },
             )
 
@@ -696,9 +782,14 @@ def start_game(
                     """
                 ),
                 {
-                    "game_id": game_id,
-                    "user_id": user.get("id"),
-                    "winning_cards": winning_card,
+                    "game_id":
+                        game_id,
+
+                    "user_id":
+                        telegram_id,
+
+                    "winning_cards":
+                        winning_card,
                 },
             )
 
@@ -722,16 +813,16 @@ def start_game(
         }
 
 
-# =========================
+# ============================================================
 # GAME CHOICE
-# =========================
+# ============================================================
 
 @app.post("/game/choice")
 def game_choice(
     payload: Choice,
     x_telegram_init_data: str = Header(
         default=""
-    )
+    ),
 ):
 
     try:
@@ -755,14 +846,16 @@ def game_choice(
 
             return {
                 "ok": False,
-                "error": "This game belongs to another player",
+                "error":
+                    "This game belongs to another player",
             }
 
         if game["finished"]:
 
             return {
                 "ok": False,
-                "error": "Game already finished",
+                "error":
+                    "Game already finished",
             }
 
         if payload.level != game["level"]:
@@ -780,9 +873,9 @@ def game_choice(
             payload.card == winning_card
         )
 
-        # =========================
+        # ----------------------------------------------------
         # WRONG CARD
-        # =========================
+        # ----------------------------------------------------
 
         if not correct:
 
@@ -792,14 +885,18 @@ def game_choice(
                     text(
                         """
                         UPDATE games
+
                         SET
                             finished = TRUE,
                             won = FALSE
-                        WHERE game_id = :game_id
+
+                        WHERE game_id =
+                            :game_id
                         """
                     ),
                     {
-                        "game_id": payload.game_id
+                        "game_id":
+                            payload.game_id
                     },
                 )
 
@@ -817,9 +914,9 @@ def game_choice(
                 "level": payload.level,
             }
 
-        # =========================
-        # CORRECT CARD = LEVEL POINTS
-        # =========================
+        # ----------------------------------------------------
+        # CORRECT CARD
+        # ----------------------------------------------------
 
         with engine.begin() as connection:
 
@@ -827,21 +924,30 @@ def game_choice(
                 text(
                     """
                     UPDATE players
+
                     SET
-                        points = points + :points_added,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE telegram_id = :telegram_id
+                        points =
+                            points + :points_added,
+
+                        updated_at =
+                            CURRENT_TIMESTAMP
+
+                    WHERE telegram_id =
+                        :telegram_id
                     """
                 ),
                 {
-                    "telegram_id": user.get("id"),
-                    "points_added": payload.level,
+                    "telegram_id":
+                        user.get("id"),
+
+                    "points_added":
+                        payload.level,
                 },
             )
 
-        # =========================
+        # ----------------------------------------------------
         # FINAL LEVEL
-        # =========================
+        # ----------------------------------------------------
 
         if payload.level >= 12:
 
@@ -851,14 +957,18 @@ def game_choice(
                     text(
                         """
                         UPDATE games
+
                         SET
                             finished = TRUE,
                             won = TRUE
-                        WHERE game_id = :game_id
+
+                        WHERE game_id =
+                            :game_id
                         """
                     ),
                     {
-                        "game_id": payload.game_id
+                        "game_id":
+                            payload.game_id
                     },
                 )
 
@@ -874,18 +984,25 @@ def game_choice(
                 "game_over": True,
                 "won": True,
                 "level": 12,
-                "points_added": payload.level,
+                "points_added":
+                    payload.level,
             }
 
-        # =========================
+        # ----------------------------------------------------
         # NEXT LEVEL
-        # =========================
+        # ----------------------------------------------------
 
         next_level = (
             payload.level + 1
         )
 
-        next_winning_card = secrets.choice(["0", "1", "2"])
+        next_winning_card = secrets.choice(
+            [
+                "0",
+                "1",
+                "2",
+            ]
+        )
 
         with engine.begin() as connection:
 
@@ -893,16 +1010,24 @@ def game_choice(
                 text(
                     """
                     UPDATE games
+
                     SET
                         level = :level,
                         winning_cards = :winning_cards
-                    WHERE game_id = :game_id
+
+                    WHERE game_id =
+                        :game_id
                     """
                 ),
                 {
-                    "game_id": payload.game_id,
-                    "level": next_level,
-                    "winning_cards": next_winning_card,
+                    "game_id":
+                        payload.game_id,
+
+                    "level":
+                        next_level,
+
+                    "winning_cards":
+                        next_winning_card,
                 },
             )
 
@@ -912,7 +1037,8 @@ def game_choice(
             "game_over": False,
             "won": False,
             "level": next_level,
-            "points_added": payload.level,
+            "points_added":
+                payload.level,
         }
 
     except Exception as error:
@@ -927,50 +1053,87 @@ def game_choice(
         }
 
 
-# =========================
-
+# ============================================================
 # RATING
+# ============================================================
 
 @app.get("/rating")
 def rating():
+
     try:
+
         with engine.begin() as connection:
+
             result = connection.execute(
-                text("""
-                    SELECT telegram_id, username, first_name, points, best_level
+                text(
+                    """
+                    SELECT
+                        telegram_id,
+                        username,
+                        first_name,
+                        points,
+                        best_level
+
                     FROM players
-                    ORDER BY points DESC, best_level DESC
+
+                    ORDER BY
+                        points DESC,
+                        best_level DESC
+
                     LIMIT 100
-                """)
+                    """
+                )
             )
 
             players = []
 
-            for index, row in enumerate(result, start=1):
-                players.append({
-                    "place": index,
-                    "telegram_id": row.telegram_id,
-                    "username": row.username,
-                    "first_name": row.first_name,
-                    "points": row.points,
-                    "best_level": row.best_level,
-                })
+            for index, row in enumerate(
+                result,
+                start=1,
+            ):
+
+                players.append(
+                    {
+                        "place":
+                            index,
+
+                        "telegram_id":
+                            row.telegram_id,
+
+                        "username":
+                            row.username,
+
+                        "first_name":
+                            row.first_name,
+
+                        "points":
+                            row.points,
+
+                        "best_level":
+                            row.best_level,
+                    }
+                )
 
         return {
             "ok": True,
-            "rating": players
+            "rating": players,
         }
 
     except Exception as error:
-        logging.exception("Rating request failed")
+
+        logging.exception(
+            "Rating request failed"
+        )
 
         return {
             "ok": False,
-            "error": str(error)
+            "error": str(error),
         }
 
+
+# ============================================================
 # RUN
-# =========================
+# ============================================================
 
 if __name__ == "__main__":
 
@@ -982,7 +1145,7 @@ if __name__ == "__main__":
         port=int(
             os.getenv(
                 "PORT",
-                "8000"
+                "8000",
             )
         ),
     )
