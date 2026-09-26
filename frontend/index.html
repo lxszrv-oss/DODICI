@@ -2,12 +2,10 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
   >
-
   <title>DODICI</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -18,157 +16,83 @@
 <body>
 
   <!-- START SCREEN -->
-  <div id="mainMenu" class="main-menu hidden">
+  <div id="mainMenu" class="main-menu">
+    <div class="menu-logo">😈</div>
 
-    <div class="start-brand">
-      DODICI
-    </div>
+    <h1>DODICI</h1>
 
-    <div class="start-subtitle">
-      МИНИ-ПРИЛОЖЕНИЕ
-    </div>
+    <p class="menu-subtitle">
+      THE LUCK IS YOURS
+    </p>
 
-    <button
-      id="startGame"
-      class="start-button"
-      type="button"
-    >
+    <div class="tap-to-start">
       НАЖМИ, ЧТОБЫ НАЧАТЬ
-    </button>
-
+    </div>
   </div>
 
 
   <!-- SIDE MENU -->
-  <aside
-    id="sideMenu"
-    class="side-menu"
-  >
+  <aside id="sideMenu" class="side-menu">
 
-    <div class="side-menu-brand">
-      DODICI
+    <div class="side-menu-title">
+      😈 DODICI
     </div>
 
-    <div class="side-menu-line"></div>
-
-    <button
-      id="ratingButton"
-      class="side-button"
-      type="button"
-    >
-      РЕЙТИНГ
+    <button id="ratingButton" class="side-button" type="button">
+      🏆 Рейтинг
     </button>
 
-    <button
-      id="profileButton"
-      class="side-button"
-      type="button"
-    >
-      ПРОФИЛЬ
+    <button id="profileButton" class="side-button" type="button">
+      👤 Профиль
     </button>
 
-    <button
-      id="howButton"
-      class="side-button"
-      type="button"
-    >
-      КАК ИГРАТЬ
+    <button id="howButton" class="side-button" type="button">
+      ❓ Как играть
     </button>
 
-    <button
-      id="settingsButton"
-      class="side-button"
-      type="button"
-    >
-      НАСТРОЙКИ
+    <button id="settingsButton" class="side-button" type="button">
+      ⚙️ Настройки
     </button>
 
   </aside>
 
-
-  <div
-    id="menuOverlay"
-    class="menu-overlay"
-  ></div>
+  <div id="menuOverlay" class="menu-overlay"></div>
 
 
   <!-- GAME -->
   <main class="app">
 
-    <!-- TOP -->
-    <header class="topbar">
+    <button
+      id="menuButton"
+      class="menu-button-icon"
+      type="button"
+      aria-label="Открыть меню"
+    >
+      ☰
+    </button>
 
-      <button
-        id="menuButton"
-        class="menu-button-icon"
-        type="button"
-        aria-label="Открыть меню"
-      >
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-
-
-      <div class="brand-block">
-
-        <div class="brand-crown">
-          ♛
-        </div>
-
-        <div class="brand">
-          DODICI
-        </div>
-
-        <div class="brand-subtitle">
-          МИНИ-ПРИЛОЖЕНИЕ
-        </div>
-
+    <header>
+      <div class="brand">
+        DODICI
       </div>
-
 
       <div class="prize">
         1 000 000 ₽
       </div>
-
     </header>
 
 
     <!-- HUD -->
     <section class="hud">
 
-      <div class="hud-item">
-
-        <span class="hud-label">
-          УРОВЕНЬ
-        </span>
-
-        <strong
-          id="level"
-          class="hud-value"
-        >
-          01 / 12
-        </strong>
-
+      <div>
+        <span>УРОВЕНЬ</span>
+        <strong id="level">01 / 12</strong>
       </div>
 
-
-      <div class="hud-divider"></div>
-
-
-      <div class="hud-item hud-attempt">
-
-        <span class="hud-label">
-          ПОПЫТКА
-        </span>
-
-        <strong
-          id="attempt"
-          class="hud-value"
-        >
-          1
-        </strong>
-
+      <div>
+        <span>ПОПЫТКА</span>
+        <strong id="attempt">1</strong>
       </div>
 
     </section>
@@ -177,28 +101,18 @@
     <!-- HERO -->
     <section class="hero">
 
-      <div class="hero-kicker">
-
-        <span></span>
-
-        <p>
-          12 ПРАВИЛЬНЫХ ВЫБОРОВ
-        </p>
-
-        <span></span>
-
-      </div>
-
+      <p>
+        12 ПРАВИЛЬНЫХ ВЫБОРОВ
+      </p>
 
       <h1>
         Найди карту.
       </h1>
 
-
-      <p class="hero-description">
+      <small>
         Одна из трёх — проигрышная.<br>
         Сделай выбор.
-      </p>
+      </small>
 
     </section>
 
@@ -211,64 +125,43 @@
         data-index="0"
         type="button"
       >
-        <span class="card-number">
-          1
-        </span>
+        D
       </button>
-
 
       <button
         class="card"
         data-index="1"
         type="button"
       >
-        <span class="card-number">
-          2
-        </span>
+        D
       </button>
-
 
       <button
         class="card"
         data-index="2"
         type="button"
       >
-        <span class="card-number">
-          3
-        </span>
+        D
       </button>
 
     </section>
 
 
     <!-- STATUS -->
-    <p
-      id="status"
-      class="status"
-    >
-      ВЫБЕРИ ОДНУ КАРТУ
+    <p id="status">
+      Выбери одну карту
     </p>
 
 
     <!-- END -->
-    <section
-      id="end"
-      class="end hidden"
-    >
+    <section id="end" class="end hidden">
 
-      <div
-        id="endTitle"
-        class="end-title"
-      ></div>
+      <div id="endTitle"></div>
 
-      <div
-        id="endText"
-        class="end-text"
-      ></div>
+      <div id="endText"></div>
 
       <button
         id="restart"
-        class="restart-button"
         type="button"
       >
         ПОПРОБОВАТЬ СНОВА
@@ -291,22 +184,28 @@
           type="button"
           aria-label="Закрыть рейтинг"
         >
-          ×
+          ✕
         </button>
-
 
         <div class="rating-header">
 
-          <div class="rating-title">
-            РЕЙТИНГ DODICI
+          <div class="rating-icon">
+            🏆
           </div>
 
-          <div class="rating-subtitle">
-            Лучшие игроки
+          <div>
+
+            <div class="rating-title">
+              РЕЙТИНГ DODICI
+            </div>
+
+            <div class="rating-subtitle">
+              Лучшие игроки
+            </div>
+
           </div>
 
         </div>
-
 
         <div
           id="ratingList"
@@ -319,8 +218,8 @@
 
 
     <!-- FOOTER -->
-    <footer class="footer">
-      БЕСПЛАТНАЯ ИГРА • DODICI
+    <footer>
+      Бесплатная игра • DODICI
     </footer>
 
   </main>
