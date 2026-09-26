@@ -100,6 +100,16 @@ with engine.begin() as connection:
         """
     )
 )
+connection.execute(
+    text(
+        """
+        ALTER TABLE players
+        ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        """
+    )
+)
+
+
 
 
 # =========================
@@ -208,9 +218,49 @@ def ensure_player(user):
         )
 
 
+def restore_attempts(telegram_id):
+
+    require_database()
+
+    with engine.begin() as connection:
+
+        connection.execute(
+            text(
+                """
+                UPDATE players
+                SET
+                    attempts = LEAST(
+                        attempts + FLOOR(
+                            EXTRACT(
+                                EPOCH FROM (
+                                    CURRENT_TIMESTAMP - last_attempt_at
+                                )
+                            ) / 3600
+                        )::INTEGER,
+                        15
+                    ),
+                    last_attempt_at =
+                        CASE
+                            WHEN attempts < 15
+                            THEN CURRENT_TIMESTAMP
+                            ELSE last_attempt_at
+                        END,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE telegram_id = :telegram_id
+                  AND attempts < 15
+                """
+            ),
+            {
+                "telegram_id": telegram_id
+            },
+        )
+
+
 def get_player(telegram_id):
 
     require_database()
+
+    restore_attempts(telegram_id)
 
     with engine.begin() as connection:
 
@@ -599,8 +649,9 @@ def start_game(
                     """
                     UPDATE players
                     SET
-                        attempts = attempts - 1,
-                        updated_at = CURRENT_TIMESTAMP
+    attempts = attempts - 1,
+    last_attempt_at = CURRENT_TIMESTAMP,
+    updated_at = CURRENT_TIMESTAMP
                     WHERE telegram_id = :telegram_id
                       AND attempts > 0
                     RETURNING attempts
