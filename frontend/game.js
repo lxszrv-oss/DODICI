@@ -142,9 +142,23 @@ async function loadPlayerAttempts() {
 loadPlayerAttempts();
 
 function reset() {
-  cards.forEach((card, i) => {
-    card.classList.remove("good", "bad");
-    card.textContent = i + 1;
+  cards.forEach((card) => {
+    card.classList.remove(
+      "good",
+      "bad",
+      "correct",
+      "wrong",
+      "win",
+      "lose",
+      "success",
+      "error"
+    );
+
+    card.style.removeProperty("border-color");
+    card.style.removeProperty("box-shadow");
+    card.style.removeProperty("background");
+
+    card.textContent = "";
   });
 }
 
@@ -234,6 +248,7 @@ async function choose(i) {
 
     if (data.correct) {
       cards[i].classList.add("good");
+      cards[i].classList.add("correct");
 
       playSound("win");
 
@@ -243,7 +258,7 @@ async function choose(i) {
         document.body.classList.remove("victory");
       }, 800);
 
-      cards[i].textContent = "😈";
+      
 
       statusEl.textContent = "Правильно! Следующий уровень…";
 
@@ -279,10 +294,11 @@ reset();
       }, 650);
     } else {
       cards[i].classList.add("bad");
+      cards[i].classList.add("wrong");
 
       playSound("lose");
 
-      cards[i].textContent = "😇";
+      
 
       statusEl.textContent = "Ой! Это была не та карточка 💥";
 
