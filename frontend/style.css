@@ -1144,3 +1144,270 @@ body.victory {
     font-size: 9px;
   }
 }
+/* =========================
+   HOW TO PLAY MODAL
+========================= */
+
+.how-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.72);
+
+  opacity: 0;
+  visibility: hidden;
+
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.how-modal.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.how-window {
+  position: relative;
+
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+
+  padding: 30px 22px 22px;
+
+  overflow-y: auto;
+
+  border-radius: 26px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #202027,
+      #111116
+    );
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+  transform: translateY(20px) scale(0.96);
+
+  transition:
+    transform 0.3s ease;
+}
+
+.how-modal.visible .how-window {
+  transform: translateY(0) scale(1);
+}
+
+.how-close {
+  position: absolute;
+
+  top: 14px;
+  right: 14px;
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.06);
+
+  color: rgba(255, 255, 255, 0.65);
+
+  font-size: 25px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.how-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.how-close:active {
+  transform: scale(0.9);
+}
+
+.how-icon {
+  width: 58px;
+  height: 58px;
+
+  margin: 0 auto 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #2d2d35,
+      #17171c
+    );
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.35);
+
+  font-size: 27px;
+}
+
+.how-title {
+  margin-bottom: 5px;
+
+  text-align: center;
+
+  font-size: 23px;
+  font-weight: 900;
+
+  letter-spacing: 0.08em;
+
+  color: #fff;
+}
+
+.how-subtitle {
+  margin-bottom: 24px;
+
+  text-align: center;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 0.16em;
+
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.how-list {
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.how-row {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 13px;
+
+  padding: 14px;
+
+  border-radius: 17px;
+
+  background: rgba(255, 255, 255, 0.045);
+
+  border: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.how-number {
+  flex: 0 0 auto;
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 11px;
+
+  background: rgba(255, 255, 255, 0.07);
+
+  color: rgba(255, 255, 255, 0.8);
+
+  font-size: 10px;
+  font-weight: 900;
+
+  letter-spacing: 0.04em;
+}
+
+.how-content {
+  min-width: 0;
+}
+
+.how-row-title {
+  margin-bottom: 4px;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+
+  color: #fff;
+}
+
+.how-row-text {
+  font-size: 12px;
+  line-height: 1.5;
+
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.how-footer {
+  margin-top: 14px;
+  padding: 13px;
+
+  border-radius: 14px;
+
+  text-align: center;
+
+  background: rgba(255, 255, 255, 0.055);
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.14em;
+
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 380px) {
+
+  .how-modal {
+    padding: 14px;
+  }
+
+  .how-window {
+    padding: 27px 16px 17px;
+    border-radius: 22px;
+  }
+
+  .how-row {
+    padding: 12px;
+  }
+
+  .how-row-text {
+    font-size: 11px;
+  }
+
+}

@@ -924,13 +924,135 @@ profileButton.addEventListener("click", async () => {
 howButton.addEventListener("click", () => {
   closeMenu();
 
-  alert(
-    "❓ КАК ИГРАТЬ\n\n" +
-    "Выбери одну из трёх карт.\n" +
-    "Угадаешь — переходишь дальше.\n" +
-    "Ошибёшься — игра заканчивается.\n\n" +
-    "Пройди все 12 уровней!"
-  );
+  const oldHow = document.getElementById("howModal");
+
+  if (oldHow) {
+    oldHow.remove();
+  }
+
+  const howModal = document.createElement("div");
+
+  howModal.id = "howModal";
+  howModal.className = "how-modal";
+
+  howModal.innerHTML = `
+    <div class="how-window">
+
+      <button
+        class="how-close"
+        id="howClose"
+        type="button"
+        aria-label="Закрыть"
+      >
+        ×
+      </button>
+
+      <div class="how-icon">
+        ❓
+      </div>
+
+      <div class="how-title">
+        КАК ИГРАТЬ
+      </div>
+
+      <div class="how-subtitle">
+        ПРОЙДИ ВСЕ 12 УРОВНЕЙ
+      </div>
+
+      <div class="how-list">
+
+        <div class="how-row">
+          <div class="how-number">01</div>
+
+          <div class="how-content">
+            <div class="how-row-title">
+              ВЫБЕРИ КАРТУ
+            </div>
+
+            <div class="how-row-text">
+              На каждом уровне показаны три карты.
+              Только одна из них правильная.
+            </div>
+          </div>
+        </div>
+
+        <div class="how-row">
+          <div class="how-number">02</div>
+
+          <div class="how-content">
+            <div class="how-row-title">
+              УГАДАЙ
+            </div>
+
+            <div class="how-row-text">
+              Нажми на карту, которую считаешь правильной.
+              Правильный выбор переводит тебя дальше.
+            </div>
+          </div>
+        </div>
+
+        <div class="how-row">
+          <div class="how-number">03</div>
+
+          <div class="how-content">
+            <div class="how-row-title">
+              НЕ ОШИБИСЬ
+            </div>
+
+            <div class="how-row-text">
+              Ошибка завершает текущий забег.
+              Постарайся пройти как можно дальше.
+            </div>
+          </div>
+        </div>
+
+        <div class="how-row">
+          <div class="how-number">04</div>
+
+          <div class="how-content">
+            <div class="how-row-title">
+              ДОЙДИ ДО 12
+            </div>
+
+            <div class="how-row-text">
+              Каждый следующий уровень сложнее.
+              Пройди все 12 уровней и закончи забег.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="how-footer">
+        УРОВЕНЬ = ОЧКИ
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(howModal);
+
+  requestAnimationFrame(() => {
+    howModal.classList.add("visible");
+  });
+
+  const closeHow = () => {
+    howModal.classList.remove("visible");
+
+    setTimeout(() => {
+      howModal.remove();
+    }, 300);
+  };
+
+  document
+    .getElementById("howClose")
+    .addEventListener("click", closeHow);
+
+  howModal.addEventListener("click", (event) => {
+    if (event.target === howModal) {
+      closeHow();
+    }
+  });
 });
 
 settingsButton.addEventListener("click", () => {
