@@ -1,66 +1,147 @@
+```html
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
-    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
   >
+
+  <meta
+    name="theme-color"
+    content="#07090d"
+  >
+
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
+
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  >
+
   <title>DODICI</title>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <link rel="stylesheet" href="style.css">
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 </head>
 
 <body>
 
-  <!-- START SCREEN -->
-  <div id="mainMenu" class="main-menu">
-    <div class="menu-logo">😈</div>
+  <!-- =========================================================
+       START SCREEN
+       ========================================================= -->
+
+  <div
+    id="mainMenu"
+    class="main-menu"
+  >
+
+    <div class="menu-crown" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
 
     <h1>DODICI</h1>
 
     <p class="menu-subtitle">
-      THE LUCK IS YOURS
+      МИНИ-ПРИЛОЖЕНИЕ
     </p>
 
     <div class="tap-to-start">
       НАЖМИ, ЧТОБЫ НАЧАТЬ
     </div>
+
   </div>
 
 
-  <!-- SIDE MENU -->
-  <aside id="sideMenu" class="side-menu">
+  <!-- =========================================================
+       SIDE MENU
+       ========================================================= -->
+
+  <aside
+    id="sideMenu"
+    class="side-menu"
+    aria-hidden="true"
+  >
 
     <div class="side-menu-title">
-      😈 DODICI
+
+      <span
+        class="side-menu-crown"
+        aria-hidden="true"
+      >
+        D
+      </span>
+
+      DODICI
+
     </div>
 
-    <button id="ratingButton" class="side-button" type="button">
-      🏆 Рейтинг
+
+    <button
+      id="ratingButton"
+      class="side-button"
+      type="button"
+    >
+      РЕЙТИНГ
     </button>
 
-    <button id="profileButton" class="side-button" type="button">
-      👤 Профиль
+
+    <button
+      id="profileButton"
+      class="side-button"
+      type="button"
+    >
+      ПРОФИЛЬ
     </button>
 
-    <button id="howButton" class="side-button" type="button">
-      ❓ Как играть
+
+    <button
+      id="howButton"
+      class="side-button"
+      type="button"
+    >
+      КАК ИГРАТЬ
     </button>
 
-    <button id="settingsButton" class="side-button" type="button">
-      ⚙️ Настройки
+
+    <button
+      id="settingsButton"
+      class="side-button"
+      type="button"
+    >
+      НАСТРОЙКИ
     </button>
 
   </aside>
 
-  <div id="menuOverlay" class="menu-overlay"></div>
+
+  <div
+    id="menuOverlay"
+    class="menu-overlay"
+  ></div>
 
 
-  <!-- GAME -->
+  <!-- =========================================================
+       MAIN APPLICATION
+       ========================================================= -->
+
   <main class="app">
+
+
+    <!-- =======================================================
+         MENU BUTTON
+         ======================================================= -->
 
     <button
       id="menuButton"
@@ -68,46 +149,112 @@
       type="button"
       aria-label="Открыть меню"
     >
-      ☰
+
+      <span></span>
+      <span></span>
+      <span></span>
+
     </button>
 
+
+    <!-- =======================================================
+         HEADER
+         ======================================================= -->
+
     <header>
-      <div class="brand">
-        DODICI
+
+      <div class="brand-block">
+
+        <div
+          class="brand-crown"
+          aria-hidden="true"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="brand">
+          DODICI
+        </div>
+
+        <div class="brand-subtitle">
+          МИНИ-ПРИЛОЖЕНИЕ
+        </div>
+
       </div>
+
 
       <div class="prize">
         1 000 000 ₽
       </div>
+
     </header>
 
 
-    <!-- HUD -->
-    <section class="hud">
+    <!-- =======================================================
+         PLAYER HUD
+         ======================================================= -->
 
-      <div>
-        <span>УРОВЕНЬ</span>
-        <strong id="level">01 / 12</strong>
+    <section
+      class="hud"
+      aria-label="Игровая информация"
+    >
+
+      <div class="hud-item">
+
+        <span>
+          УРОВЕНЬ
+        </span>
+
+        <strong id="level">
+          01 / 12
+        </strong>
+
       </div>
 
-      <div>
-        <span>ПОПЫТКА</span>
-        <strong id="attempt">1</strong>
+
+      <div class="hud-divider"></div>
+
+
+      <div class="hud-item hud-attempt">
+
+        <span>
+          ПОПЫТКА
+        </span>
+
+        <strong id="attempt">
+          1
+        </strong>
+
       </div>
 
     </section>
 
 
-    <!-- HERO -->
+    <!-- =======================================================
+         HERO
+         ======================================================= -->
+
     <section class="hero">
 
-      <p>
-        12 ПРАВИЛЬНЫХ ВЫБОРОВ
-      </p>
+      <div class="hero-label">
+
+        <span></span>
+
+        <p>
+          12 ПРАВИЛЬНЫХ ВЫБОРОВ
+        </p>
+
+        <span></span>
+
+      </div>
+
 
       <h1>
         Найди карту.
       </h1>
+
 
       <small>
         Одна из трёх — проигрышная.<br>
@@ -117,44 +264,114 @@
     </section>
 
 
-    <!-- CARDS -->
-    <section class="cards">
+    <!-- =======================================================
+         CARDS
+         ======================================================= -->
+
+    <section
+      class="cards"
+      aria-label="Карты"
+    >
 
       <button
         class="card"
         data-index="0"
         type="button"
+        aria-label="Карта 1"
       >
-        D
+
+        <span class="card-decoration top"></span>
+
+        <span class="card-crown">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+
+        <span class="card-number">
+          1
+        </span>
+
+        <span class="card-decoration bottom"></span>
+
       </button>
+
 
       <button
         class="card"
         data-index="1"
         type="button"
+        aria-label="Карта 2"
       >
-        D
+
+        <span class="card-decoration top"></span>
+
+        <span class="card-crown">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+
+        <span class="card-number">
+          2
+        </span>
+
+        <span class="card-decoration bottom"></span>
+
       </button>
+
 
       <button
         class="card"
         data-index="2"
         type="button"
+        aria-label="Карта 3"
       >
-        D
+
+        <span class="card-decoration top"></span>
+
+        <span class="card-crown">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+
+        <span class="card-number">
+          3
+        </span>
+
+        <span class="card-decoration bottom"></span>
+
       </button>
 
     </section>
 
 
-    <!-- STATUS -->
-    <p id="status">
-      Выбери одну карту
-    </p>
+    <!-- =======================================================
+         CARD INSTRUCTION
+         ======================================================= -->
+
+    <div class="choose-label">
+
+      <span></span>
+
+      <p id="status">
+        ВЫБЕРИ ОДНУ КАРТУ
+      </p>
+
+      <span></span>
+
+    </div>
 
 
-    <!-- END -->
-    <section id="end" class="end hidden">
+    <!-- =======================================================
+         END GAME
+         ======================================================= -->
+
+    <section
+      id="end"
+      class="end hidden"
+    >
 
       <div id="endTitle"></div>
 
@@ -170,10 +387,14 @@
     </section>
 
 
-    <!-- RATING MODAL -->
+    <!-- =======================================================
+         RATING MODAL
+         ======================================================= -->
+
     <section
       id="ratingModal"
       class="rating-modal hidden"
+      aria-hidden="true"
     >
 
       <div class="rating-window">
@@ -184,14 +405,18 @@
           type="button"
           aria-label="Закрыть рейтинг"
         >
-          ✕
+          ×
         </button>
+
 
         <div class="rating-header">
 
-          <div class="rating-icon">
-            🏆
+          <div class="rating-crown">
+            <span></span>
+            <span></span>
+            <span></span>
           </div>
+
 
           <div>
 
@@ -207,6 +432,7 @@
 
         </div>
 
+
         <div
           id="ratingList"
           class="rating-list"
@@ -217,15 +443,31 @@
     </section>
 
 
-    <!-- FOOTER -->
+    <!-- =======================================================
+         FOOTER
+         ======================================================= -->
+
     <footer>
-      Бесплатная игра • DODICI
+
+      <span class="footer-line"></span>
+
+      <span>
+        БЕСПЛАТНАЯ ИГРА • DODICI
+      </span>
+
+      <span class="footer-line"></span>
+
     </footer>
 
   </main>
 
 
+  <!-- =========================================================
+       GAME SCRIPT
+       ========================================================= -->
+
   <script src="game.js"></script>
 
 </body>
 </html>
+```
