@@ -1054,6 +1054,66 @@ def game_choice(
 
 
 # ============================================================
+# TEST ATTEMPTS
+# ============================================================
+
+@app.post("/test/set-500-attempts")
+def set_500_attempts(
+    x_telegram_init_data: str = Header(
+        default=""
+    )
+):
+
+    try:
+
+        user = validate_telegram_init_data(
+            x_telegram_init_data
+        )
+
+        telegram_id = user.get("id")
+
+        if telegram_id != 7289054832:
+            return {
+                "ok": False,
+                "error": "Not allowed",
+            }
+
+        with engine.begin() as connection:
+
+            connection.execute(
+                text(
+                    """
+                    UPDATE players
+                    SET
+                        attempts = 500,
+                        last_attempt_refill = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE telegram_id = :telegram_id
+                    """
+                ),
+                {
+                    "telegram_id": telegram_id,
+                },
+            )
+
+        return {
+            "ok": True,
+            "attempts": 500,
+        }
+
+    except Exception as error:
+
+        logging.exception(
+            "Test attempts update failed"
+        )
+
+        return {
+            "ok": False,
+            "error": str(error),
+        }
+
+
+# ============================================================
 # RATING
 # ============================================================
 
