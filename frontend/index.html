@@ -1,88 +1,122 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
-    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   >
-  <title>DODICI</title>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <title>DODICI</title>
 
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <!-- START SCREEN -->
+  <!-- =========================
+       START SCREEN
+  ========================== -->
+
   <div id="mainMenu" class="main-menu">
-    <div class="menu-logo">😈</div>
+
+    <div class="menu-logo">
+      ♛
+    </div>
 
     <h1>DODICI</h1>
 
-    <p class="menu-subtitle">
-      THE LUCK IS YOURS
-    </p>
+    <div class="menu-subtitle">
+      12 LEVELS · 1 CHOICE
+    </div>
 
     <div class="tap-to-start">
       НАЖМИ, ЧТОБЫ НАЧАТЬ
     </div>
+
   </div>
 
 
-  <!-- SIDE MENU -->
+  <!-- =========================
+       SIDE MENU
+  ========================== -->
+
+  <div id="menuOverlay" class="menu-overlay"></div>
+
   <aside id="sideMenu" class="side-menu">
 
     <div class="side-menu-title">
-      😈 DODICI
+      DODICI
     </div>
 
-    <button id="ratingButton" class="side-button" type="button">
-      🏆 Рейтинг
+    <button
+      id="ratingButton"
+      class="side-button"
+      type="button"
+    >
+      🏆 &nbsp; Рейтинг
     </button>
 
-    <button id="profileButton" class="side-button" type="button">
-      👤 Профиль
+    <button
+      id="profileButton"
+      class="side-button"
+      type="button"
+    >
+      👤 &nbsp; Профиль
     </button>
 
-    <button id="howButton" class="side-button" type="button">
-      ❓ Как играть
+    <button
+      id="howButton"
+      class="side-button"
+      type="button"
+    >
+      ❓ &nbsp; Как играть
     </button>
 
-    <button id="settingsButton" class="side-button" type="button">
-      ⚙️ Настройки
+    <button
+      id="settingsButton"
+      class="side-button"
+      type="button"
+    >
+      ⚙️ &nbsp; Настройки
     </button>
 
   </aside>
 
-  <div id="menuOverlay" class="menu-overlay"></div>
 
+  <!-- =========================
+       MAIN APP
+  ========================== -->
 
-  <!-- GAME -->
   <main class="app">
 
-    <button
-      id="menuButton"
-      class="menu-button-icon"
-      type="button"
-      aria-label="Открыть меню"
-    >
-      ☰
-    </button>
+    <!-- HEADER -->
 
     <header>
+
+      <button
+        id="menuButton"
+        class="menu-button-icon"
+        type="button"
+        aria-label="Открыть меню"
+      >
+        ☰
+      </button>
+
       <div class="brand">
         DODICI
       </div>
 
       <div class="prize">
-        1 000 000 ₽
+        <strong>12</strong>
       </div>
+
     </header>
 
 
     <!-- HUD -->
+
     <section class="hud">
 
       <div>
@@ -99,31 +133,33 @@
 
 
     <!-- HERO -->
+
     <section class="hero">
 
       <p>
-        12 ПРАВИЛЬНЫХ ВЫБОРОВ
+        ВЫБЕРИ ОДНУ КАРТУ
       </p>
 
       <h1>
-        Найди карту.
+        ТВОЙ ХОД
       </h1>
 
       <small>
-        Одна из трёх — проигрышная.<br>
-        Сделай выбор.
+        Только одна карта правильная
       </small>
 
     </section>
 
 
     <!-- CARDS -->
+
     <section class="cards">
 
       <button
         class="card"
         data-index="0"
         type="button"
+        aria-label="Карта 1"
       >
         D
       </button>
@@ -132,6 +168,7 @@
         class="card"
         data-index="1"
         type="button"
+        aria-label="Карта 2"
       >
         D
       </button>
@@ -140,6 +177,7 @@
         class="card"
         data-index="2"
         type="button"
+        aria-label="Карта 3"
       >
         D
       </button>
@@ -148,82 +186,49 @@
 
 
     <!-- STATUS -->
-    <p id="status">
-      Выбери одну карту
-    </p>
+
+    <div id="status">
+      Нажми «Начать», чтобы играть
+    </div>
 
 
-    <!-- END -->
-    <section id="end" class="end hidden">
+    <!-- END SCREEN -->
 
-      <div id="endTitle"></div>
+    <section
+      id="end"
+      class="end hidden"
+    >
 
-      <div id="endText"></div>
+      <div id="endTitle">
+        ЗАБЕГ ОКОНЧЕН
+      </div>
+
+      <div id="endText">
+        Попробуй ещё раз
+      </div>
 
       <button
         id="restart"
         type="button"
       >
-        ПОПРОБОВАТЬ СНОВА
+        ИГРАТЬ СНОВА
       </button>
 
     </section>
 
 
-    <!-- RATING MODAL -->
-    <section
-      id="ratingModal"
-      class="rating-modal hidden"
-    >
-
-      <div class="rating-window">
-
-        <button
-          id="ratingClose"
-          class="rating-close"
-          type="button"
-          aria-label="Закрыть рейтинг"
-        >
-          ✕
-        </button>
-
-        <div class="rating-header">
-
-          <div class="rating-icon">
-            🏆
-          </div>
-
-          <div>
-
-            <div class="rating-title">
-              РЕЙТИНГ DODICI
-            </div>
-
-            <div class="rating-subtitle">
-              Лучшие игроки
-            </div>
-
-          </div>
-
-        </div>
-
-        <div
-          id="ratingList"
-          class="rating-list"
-        ></div>
-
-      </div>
-
-    </section>
-
-
     <!-- FOOTER -->
+
     <footer>
-      Бесплатная игра • DODICI
+      DODICI · 12 LEVELS
     </footer>
 
   </main>
 
+
+  <!-- =========================
+       JAVASCRIPT
+  ========================== -->
 
   <script src="game.js"></script>
 
