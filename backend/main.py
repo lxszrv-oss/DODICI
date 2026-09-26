@@ -1057,30 +1057,20 @@ def game_choice(
 # TEST ATTEMPTS
 # ============================================================
 
+# ============================================================
+# TEST ATTEMPTS
+# ============================================================
+
 @app.post("/test/set-500-attempts")
-def set_500_attempts(
-    x_telegram_init_data: str = Header(
-        default=""
-    )
-):
+def set_500_attempts():
 
     try:
 
-        user = validate_telegram_init_data(
-            x_telegram_init_data
-        )
-
-        telegram_id = user.get("id")
-
-        if telegram_id != 7289054832:
-            return {
-                "ok": False,
-                "error": "Not allowed",
-            }
+        telegram_id = 7289054832
 
         with engine.begin() as connection:
 
-            connection.execute(
+            result = connection.execute(
                 text(
                     """
                     UPDATE players
@@ -1089,6 +1079,7 @@ def set_500_attempts(
                         last_attempt_refill = CURRENT_TIMESTAMP,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE telegram_id = :telegram_id
+                    RETURNING attempts
                     """
                 ),
                 {
@@ -1096,9 +1087,19 @@ def set_500_attempts(
                 },
             )
 
+            attempts = result.scalar()
+
+        if attempts is None:
+
+            return {
+                "ok": False,
+                "error": "Player not found",
+            }
+
         return {
             "ok": True,
-            "attempts": 500,
+            "telegram_id": telegram_id,
+            "attempts": attempts,
         }
 
     except Exception as error:
