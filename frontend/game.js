@@ -10,11 +10,6 @@ if (tg) {
 const telegramInitData = tg?.initData || "";
 const telegramUser = tg?.initDataUnsafe?.user || null;
 
-
-/* =========================
-   ELEMENTS
-========================= */
-
 const cards = [...document.querySelectorAll(".card")];
 
 const levelEl = document.getElementById("level");
@@ -36,37 +31,25 @@ const profileButton = document.getElementById("profileButton");
 const howButton = document.getElementById("howButton");
 const settingsButton = document.getElementById("settingsButton");
 
-
-/* =========================
-   GAME STATE
-========================= */
-
 let gameId = null;
 let level = 1;
 let attempt = 1;
 let locked = false;
 
-
-/* =========================
-   SOUND
-========================= */
-
-const AudioContextClass =
-  window.AudioContext || window.webkitAudioContext;
-
-const audioCtx = AudioContextClass
-  ? new AudioContextClass()
-  : null;
-
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playSound(type) {
+
   const soundEnabled =
     localStorage.getItem("dodici_sound") !== "off";
 
-  if (!soundEnabled || !audioCtx) {
+  if (!soundEnabled) {
     return;
   }
 
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
   if (audioCtx.state === "suspended") {
     audioCtx.resume();
   }
@@ -85,14 +68,8 @@ function playSound(type) {
     osc.frequency.setValueAtTime(1040, now + 0.16);
 
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(
-      0.25,
-      now + 0.03
-    );
-    gain.gain.exponentialRampToValueAtTime(
-      0.001,
-      now + 0.35
-    );
+    gain.gain.exponentialRampToValueAtTime(0.25, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
 
     osc.start(now);
     osc.stop(now + 0.35);
@@ -100,20 +77,11 @@ function playSound(type) {
 
   if (type === "lose") {
     osc.frequency.setValueAtTime(220, now);
-    osc.frequency.exponentialRampToValueAtTime(
-      90,
-      now + 0.35
-    );
+    osc.frequency.exponentialRampToValueAtTime(90, now + 0.35);
 
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(
-      0.3,
-      now + 0.03
-    );
-    gain.gain.exponentialRampToValueAtTime(
-      0.001,
-      now + 0.4
-    );
+    gain.gain.exponentialRampToValueAtTime(0.3, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
 
     osc.start(now);
     osc.stop(now + 0.4);
@@ -124,14 +92,8 @@ function playSound(type) {
     osc.frequency.setValueAtTime(880, now + 0.1);
 
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(
-      0.18,
-      now + 0.03
-    );
-    gain.gain.exponentialRampToValueAtTime(
-      0.001,
-      now + 0.25
-    );
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
 
     osc.start(now);
     osc.stop(now + 0.25);
@@ -143,189 +105,65 @@ function playSound(type) {
     osc.frequency.setValueAtTime(880, now + 0.16);
 
     gain.gain.setValueAtTime(0.001, now);
-    gain.gain.exponentialRampToValueAtTime(
-      0.18,
-      now + 0.03
-    );
-    gain.gain.exponentialRampToValueAtTime(
-      0.001,
-      now + 0.3
-    );
+    gain.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
 
     osc.start(now);
     osc.stop(now + 0.3);
   }
 }
 
-
-/* =========================
-   VIBRATION
-========================= */
-
-function vibrate(pattern = 20) {
-  const vibrationEnabled =
-    localStorage.getItem("dodici_vibration") !== "off";
-
-  if (!vibrationEnabled) {
-    return;
-  }
-
-  if (tg?.HapticFeedback) {
-    tg.HapticFeedback.impactOccurred("light");
-    return;
-  }
-
-  if (navigator.vibrate) {
-    navigator.vibrate(pattern);
-  }
-}
-
-
-/* =========================
-   CARD DESIGN
-========================= */
-
-function cardMarkup(i, value = i + 1) {
-  return `
-    <span class="card-glow"></span>
-
-    <span class="card-crown">
-      ♛
-    </span>
-
-    <span class="card-number">
-      ${value}
-    </span>
-
-    <span class="card-shine"></span>
-  `;
-}
-
-
-/* =========================
-   HUD
-========================= */
-
-function updateHud() {
-  levelEl.textContent =
-    String(level).padStart(2, "0") + " / 12";
-
+function hud() {
+  levelEl.textContent = String(level).padStart(2, "0") + " / 12";
   attemptEl.textContent = attempt;
 }
 
-
-/* =========================
-   RESET CARDS
-========================= */
-
-function resetCards() {
+function reset() {
   cards.forEach((card, i) => {
-    card.classList.remove(
-      "good",
-      "bad",
-      "card-enter"
-    );
-
-    card.innerHTML = cardMarkup(i);
+    card.classList.remove("good", "bad");
+    card.textContent = i + 1;
   });
 }
-
-
-/* =========================
-   RESULT CARD
-========================= */
-
-function setCardResult(card, emoji) {
-  card.innerHTML = `
-    <span class="card-glow"></span>
-
-    <span class="card-crown">
-      ♛
-    </span>
-
-    <span class="card-number">
-      ${emoji}
-    </span>
-
-    <span class="card-shine"></span>
-  `;
-}
-
-
-/* =========================
-   FINISH GAME
-========================= */
 
 function finish(title, text) {
   endTitle.textContent = title;
   endText.textContent = text;
-
   end.classList.remove("hidden");
 }
 
-
-/* =========================
-   START GAME
-========================= */
-
 async function startGame() {
   try {
-    locked = true;
-
-    const response = await fetch(
-      `${API_URL}/game/start`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          "X-Telegram-Init-Data": telegramInitData
-        },
-
-        body: "{}"
-      }
-    );
+    const response = await fetch(`${API_URL}/game/start`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": telegramInitData
+      },
+      body: "{}"
+    });
 
     const data = await response.json();
 
     if (!data.ok) {
-      throw new Error(
-        data.error || "Не удалось начать игру"
-      );
+      throw new Error(data.error || "Не удалось начать игру");
     }
 
     gameId = data.game_id;
-
     level = data.level;
     locked = false;
 
-    resetCards();
+    reset();
 
     end.classList.add("hidden");
 
-    statusEl.textContent =
-      "Выбери одну карту";
+    statusEl.textContent = "Выбери одну карту";
 
-    updateHud();
-
-    cards.forEach(card => {
-      card.classList.add("card-enter");
-    });
-
+    hud();
   } catch (error) {
     console.error(error);
-
-    locked = false;
-
-    statusEl.textContent =
-      "Ошибка соединения с сервером";
+    statusEl.textContent = "Ошибка соединения с сервером";
   }
 }
-
-
-/* =========================
-   CHOOSE CARD
-========================= */
 
 async function choose(i) {
   if (locked || !gameId) {
@@ -334,80 +172,44 @@ async function choose(i) {
 
   locked = true;
 
-  vibrate(18);
-
-  statusEl.textContent =
-    "Проверяем…";
+  statusEl.textContent = "Проверяем…";
 
   try {
-    const response = await fetch(
-      `${API_URL}/game/choice`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-          "X-Telegram-Init-Data": telegramInitData
-        },
-
-        body: JSON.stringify({
-          game_id: gameId,
-          level: level,
-          card: String(i)
-        })
-      }
-    );
+    const response = await fetch(`${API_URL}/game/choice`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": telegramInitData
+      },
+      body: JSON.stringify({
+        game_id: gameId,
+        level: level,
+        card: String(i)
+      })
+    });
 
     const data = await response.json();
 
     if (!data.ok) {
-      throw new Error(
-        data.error || "Ошибка сервера"
-      );
+      throw new Error(data.error || "Ошибка сервера");
     }
 
-
-    /* =====================
-       CORRECT
-    ===================== */
-
     if (data.correct) {
-
       cards[i].classList.add("good");
-
-      setCardResult(
-        cards[i],
-        "😈"
-      );
 
       playSound("win");
 
-      vibrate([
-        15,
-        35,
-        25
-      ]);
-
-      document.body.classList.add(
-        "victory"
-      );
+      document.body.classList.add("victory");
 
       setTimeout(() => {
-        document.body.classList.remove(
-          "victory"
-        );
+        document.body.classList.remove("victory");
       }, 800);
 
-      statusEl.textContent =
-        "Правильно! Следующий уровень…";
+      cards[i].textContent = "😈";
 
-
-      /* ===================
-         FINAL LEVEL
-      =================== */
+      statusEl.textContent = "Правильно! Следующий уровень…";
 
       if (data.won) {
-
         finish(
           "ТЫ ПРОШЁЛ DODICI",
           "12 из 12. Поздравляем!"
@@ -416,189 +218,93 @@ async function choose(i) {
         return;
       }
 
-
-      /* ===================
-         NEXT LEVEL
-      =================== */
-
       setTimeout(() => {
-
         level = data.level;
-
-        attempt++;
 
         playSound("level");
 
-        vibrate(18);
+        attempt++;
 
-        resetCards();
+        reset();
 
         cards.forEach(card => {
-          card.classList.add(
-            "card-enter"
-          );
+          card.classList.remove("card-enter");
+        });
+
+        void cards[0].offsetWidth;
+
+        cards.forEach(card => {
+          card.classList.add("card-enter");
         });
 
         locked = false;
 
-        statusEl.textContent =
-          "Выбери одну карту";
+        statusEl.textContent = "Выбери одну карту";
 
-        updateHud();
-
+        hud();
       }, 650);
+    } else {
+      cards[i].classList.add("bad");
 
+      playSound("lose");
 
-      return;
+      cards[i].textContent = "😇";
+
+      statusEl.textContent = "Ой! Это была не та карточка 💥";
+
+      finish(
+        "ЗАБЕГ ОКОНЧЕН",
+        "Ты дошёл до уровня " + level + " из 12."
+      );
     }
-
-
-    /* =====================
-       WRONG
-    ===================== */
-
-    cards[i].classList.add("bad");
-
-    setCardResult(
-      cards[i],
-      "😇"
-    );
-
-    playSound("lose");
-
-    vibrate([
-      40,
-      50,
-      40
-    ]);
-
-    statusEl.textContent =
-      "Ой! Это была не та карточка 💥";
-
-    finish(
-      "ЗАБЕГ ОКОНЧЕН",
-      "Ты дошёл до уровня " +
-      level +
-      " из 12."
-    );
-
   } catch (error) {
-
     console.error(error);
 
-    statusEl.textContent =
-      "Ошибка соединения с сервером";
+    statusEl.textContent = "Ошибка соединения с сервером";
 
     locked = false;
   }
 }
 
-
-/* =========================
-   CARD CLICK
-========================= */
-
 cards.forEach(card => {
-
-  card.addEventListener(
-    "click",
-    () => {
-      choose(
-        Number(
-          card.dataset.index
-        )
-      );
-    }
-  );
-
+  card.addEventListener("click", () => {
+    choose(Number(card.dataset.index));
+  });
 });
 
+document.getElementById("restart").addEventListener("click", () => {
+  attempt++;
+  startGame();
+});
 
-/* =========================
-   RESTART
-========================= */
+mainMenu.addEventListener("click", () => {
+  playSound("start");
 
-document
-  .getElementById("restart")
-  .addEventListener(
-    "click",
-    () => {
+  mainMenu.classList.add("hidden");
 
-      attempt++;
-
-      startGame();
-    }
-  );
-
-
-/* =========================
-   START MENU CLICK
-========================= */
-
-mainMenu.addEventListener(
-  "click",
-  () => {
-
-    playSound("start");
-
-    vibrate(25);
-
-    mainMenu.classList.add(
-      "hidden"
-    );
-
-    startGame();
-  }
-);
-
-
-/* =========================
-   SIDE MENU
-========================= */
+  startGame();
+});
 
 function openMenu() {
   sideMenu.classList.add("open");
-
-  menuOverlay.classList.add(
-    "visible"
-  );
+  menuOverlay.classList.add("visible");
 }
-
 
 function closeMenu() {
-  sideMenu.classList.remove(
-    "open"
-  );
-
-  menuOverlay.classList.remove(
-    "visible"
-  );
+  sideMenu.classList.remove("open");
+  menuOverlay.classList.remove("visible");
 }
 
+menuButton.addEventListener("click", () => {
+  openMenu();
+});
 
-menuButton.addEventListener(
-  "click",
-  () => {
+menuOverlay.addEventListener("click", () => {
+  closeMenu();
+});
 
-    vibrate(10);
-
-    openMenu();
-  }
-);
-
-
-menuOverlay.addEventListener(
-  "click",
-  closeMenu
-);
-
-
-/* =========================
-   PLAYER HELPERS
-========================= */
 
 function getPlayerId(player) {
-
   return (
     player.telegram_id ??
     player.user_id ??
@@ -608,216 +314,246 @@ function getPlayerId(player) {
   );
 }
 
-
 function isCurrentPlayer(player) {
-
   if (!telegramUser) {
     return false;
   }
 
-  const playerId =
-    getPlayerId(player);
+  const playerId = getPlayerId(player);
 
   if (playerId !== null) {
-
-    return (
-      String(playerId) ===
-      String(telegramUser.id)
-    );
+    return String(playerId) === String(telegramUser.id);
   }
 
-  return !!(
+  if (
     player.username &&
     telegramUser.username &&
-    player.username.toLowerCase() ===
-    telegramUser.username.toLowerCase()
-  );
+    player.username.toLowerCase() === telegramUser.username.toLowerCase()
+  ) {
+    return true;
+  }
+
+  return false;
 }
 
+function getPlaceClass(place) {
+  if (place === 1) {
+    return "rating-gold";
+  }
 
-/* =========================
-   HTML ESCAPE
-========================= */
+  if (place === 2) {
+    return "rating-silver";
+  }
+
+  if (place === 3) {
+    return "rating-bronze";
+  }
+
+  return "";
+}
+
+function getPlaceIcon(place) {
+  if (place === 1) {
+    return "🥇";
+  }
+
+  if (place === 2) {
+    return "🥈";
+  }
+
+  if (place === 3) {
+    return "🥉";
+  }
+
+  return place;
+}
 
 function escapeHtml(value) {
-
   return String(value ?? "")
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
-
-/* =========================
-   RATING STYLES
-========================= */
-
 function createRatingStyles() {
-
-  if (
-    document.getElementById(
-      "dodici-rating-styles"
-    )
-  ) {
+  if (document.getElementById("dodici-rating-styles")) {
     return;
   }
 
-  const style =
-    document.createElement(
-      "style"
-    );
+  const style = document.createElement("style");
 
-  style.id =
-    "dodici-rating-styles";
+  style.id = "dodici-rating-styles";
 
   style.textContent = `
     .rating-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0, 0, 0, 0.78);
+      backdrop-filter: blur(10px);
       opacity: 0;
       visibility: hidden;
-      pointer-events: none;
-      transition: .25s;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
     }
 
     .rating-modal.visible {
       opacity: 1;
       visibility: visible;
-      pointer-events: auto;
     }
 
     .rating-window {
       width: min(470px, 100%);
-      max-height: 88vh;
+      max-height: min(720px, 88vh);
       overflow: hidden;
-      border: 1px solid rgba(64,127,255,.42);
-      border-radius: 28px;
-      background: linear-gradient(
-        145deg,
-        #0a1b44,
-        #040818
-      );
-      box-shadow: 0 30px 100px #000b;
-      transform:
-        translateY(20px)
-        scale(.96);
-      transition: .3s;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255, 190, 60, 0.18), transparent 35%),
+        radial-gradient(circle at 0% 100%, rgba(120, 70, 255, 0.16), transparent 40%),
+        linear-gradient(145deg, #191522, #0a0b11 70%);
+      box-shadow:
+        0 30px 90px rgba(0, 0, 0, 0.7),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      transform: translateY(20px) scale(0.96);
+      transition: transform 0.3s cubic-bezier(.17,.89,.32,1.2);
     }
 
-    .rating-modal.visible
-    .rating-window {
-      transform:
-        translateY(0)
-        scale(1);
+    .rating-modal.visible .rating-window {
+      transform: translateY(0) scale(1);
     }
 
     .rating-header {
       position: relative;
-      padding: 23px 20px 18px;
+      padding: 24px 22px 18px;
       text-align: center;
-      border-bottom:
-        1px solid #436fc722;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .rating-icon {
-      font-size: 36px;
+    .rating-crown {
+      font-size: 38px;
+      line-height: 1;
+      margin-bottom: 7px;
     }
 
     .rating-title {
+      margin: 0;
       color: #fff;
-      font-size: 23px;
-      font-weight: 1000;
-      letter-spacing: .06em;
+      font-size: 25px;
+      font-weight: 950;
+      letter-spacing: 2px;
     }
 
     .rating-subtitle {
-      margin-top: 5px;
-      color: #6279a8;
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: .18em;
+      margin-top: 6px;
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
 
     .rating-close {
       position: absolute;
-      top: 12px;
-      right: 13px;
+      top: 15px;
+      right: 15px;
       width: 38px;
       height: 38px;
-      border: 1px solid #5b85e022;
-      border-radius: 50%;
-      background: #ffffff0d;
-      color: #dce8ff;
-      font-size: 23px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
     }
 
     .rating-list {
-      max-height:
-        calc(88vh - 150px);
+      max-height: calc(min(720px, 88vh) - 155px);
       overflow-y: auto;
       padding: 12px;
     }
 
+    .rating-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .rating-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+    }
+
     .rating-row {
       display: grid;
-      grid-template-columns:
-        43px 1fr auto;
+      grid-template-columns: 48px 1fr auto;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 8px;
-      padding: 11px;
-      border: 1px solid #4373de22;
-      border-radius: 16px;
-      background: #11275485;
+      padding: 12px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.045);
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .rating-row:hover {
+      transform: translateX(3px);
+      background: rgba(255, 255, 255, 0.08);
     }
 
     .rating-row.me {
-      border-color: #ffd02c9e;
+      border-color: rgba(255, 215, 70, 0.75);
       background:
-        linear-gradient(
-          90deg,
-          #ffc21f22,
-          #1b2a5a6b
-        );
+        linear-gradient(90deg, rgba(255, 200, 50, 0.17), rgba(255, 170, 30, 0.05));
+      box-shadow:
+        0 0 18px rgba(255, 190, 40, 0.12),
+        inset 0 0 20px rgba(255, 200, 50, 0.04);
+    }
+
+    .rating-row.me::after {
+      content: "ЭТО ТЫ";
+      margin-left: 6px;
+      color: #ffd84d;
+      font-size: 8px;
+      font-weight: 900;
+      letter-spacing: 1px;
     }
 
     .rating-place {
-      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
       font-size: 17px;
-      font-weight: 950;
+      font-weight: 900;
     }
 
     .rating-gold .rating-place {
-      color: #ffd83b;
+      color: #ffd84d;
+      text-shadow: 0 0 15px rgba(255, 210, 60, 0.7);
     }
 
     .rating-silver .rating-place {
-      color: #dbe7ff;
+      color: #dce2eb;
+      text-shadow: 0 0 13px rgba(220, 225, 235, 0.45);
     }
 
     .rating-bronze .rating-place {
-      color: #e09358;
+      color: #d89155;
+      text-shadow: 0 0 13px rgba(210, 130, 70, 0.5);
+    }
+
+    .rating-name {
+      min-width: 0;
     }
 
     .rating-name-main {
       overflow: hidden;
       color: #fff;
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 800;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -825,887 +561,542 @@ function createRatingStyles() {
 
     .rating-level {
       margin-top: 3px;
-      color: #5e75a2;
-      font-size: 9px;
+      color: rgba(255, 255, 255, 0.42);
+      font-size: 10px;
     }
 
     .rating-points {
       text-align: right;
       color: #fff;
       font-size: 14px;
-      font-weight: 950;
+      font-weight: 900;
+      white-space: nowrap;
     }
 
     .rating-points span {
       display: block;
       margin-top: 2px;
-      color: #52698f;
-      font-size: 8px;
+      color: rgba(255, 255, 255, 0.38);
+      font-size: 9px;
+      font-weight: 600;
     }
 
     .rating-empty {
-      padding: 40px;
+      padding: 45px 20px;
       text-align: center;
-      color: #62749b;
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    @media (max-width: 480px) {
+      .rating-modal {
+        padding: 10px;
+      }
+
+      .rating-window {
+        border-radius: 23px;
+      }
+
+      .rating-row {
+        grid-template-columns: 40px 1fr auto;
+        gap: 8px;
+        padding: 11px 9px;
+      }
+
+      .rating-row.me::after {
+        display: none;
+      }
+
+      .rating-title {
+        font-size: 22px;
+      }
     }
   `;
 
-  document.head.appendChild(
-    style
-  );
+  document.head.appendChild(style);
 }
 
-
-/* =========================
-   RATING MODAL
-========================= */
-
-function showRatingModal(
-  rating
-) {
-
+function showRatingModal(rating) {
   createRatingStyles();
 
-  document
-    .getElementById(
-      "ratingModal"
-    )
-    ?.remove();
+  const oldModal = document.getElementById("ratingModal");
 
-  const modal =
-    document.createElement(
-      "div"
-    );
+  if (oldModal) {
+    oldModal.remove();
+  }
 
-  modal.id =
-    "ratingModal";
+  const modal = document.createElement("div");
 
-  modal.className =
-    "rating-modal";
+  modal.id = "ratingModal";
+  modal.className = "rating-modal";
 
-  const rows =
-    rating
-      .map(player => {
+  const rows = rating
+    .map((player) => {
+      const place = Number(player.place);
+      const name =
+        player.first_name ||
+        player.username ||
+        "Игрок";
 
-        const place =
-          Number(
-            player.place
-          );
+      const bestLevel =
+        player.best_level !== undefined &&
+        player.best_level !== null
+          ? player.best_level
+          : 0;
 
-        const name =
-          player.first_name ||
-          player.username ||
-          "Игрок";
+      const points =
+        player.points !== undefined &&
+        player.points !== null
+          ? player.points
+          : 0;
 
-        const bestLevel =
-          player.best_level ?? 0;
+      const me = isCurrentPlayer(player);
+      const placeClass = getPlaceClass(place);
 
-        const points =
-          player.points ?? 0;
-
-        const me =
-          isCurrentPlayer(
-            player
-          );
-
-        let placeIcon =
-          place;
-
-        if (place === 1) {
-          placeIcon = "🥇";
-        }
-
-        if (place === 2) {
-          placeIcon = "🥈";
-        }
-
-        if (place === 3) {
-          placeIcon = "🥉";
-        }
-
-        let placeClass = "";
-
-        if (place === 1) {
-          placeClass =
-            "rating-gold";
-        }
-
-        if (place === 2) {
-          placeClass =
-            "rating-silver";
-        }
-
-        if (place === 3) {
-          placeClass =
-            "rating-bronze";
-        }
-
-        return `
-          <div
-            class="
-              rating-row
-              ${placeClass}
-              ${me ? "me" : ""}
-            "
-          >
-
-            <div class="rating-place">
-              ${placeIcon}
-            </div>
-
-            <div class="rating-name">
-
-              <div
-                class="rating-name-main"
-              >
-                ${escapeHtml(name)}
-              </div>
-
-              <div
-                class="rating-level"
-              >
-                Лучший уровень:
-                ${escapeHtml(bestLevel)}
-              </div>
-
-            </div>
-
-            <div
-              class="rating-points"
-            >
-              ${escapeHtml(points)}
-
-              <span>
-                ОЧКОВ
-              </span>
-            </div>
-
+      return `
+        <div class="rating-row ${placeClass} ${me ? "me" : ""}">
+          <div class="rating-place">
+            ${getPlaceIcon(place)}
           </div>
-        `;
-      })
-      .join("");
 
+          <div class="rating-name">
+            <div class="rating-name-main">
+              ${escapeHtml(name)}
+            </div>
+
+            <div class="rating-level">
+              Лучший уровень: ${escapeHtml(bestLevel)}
+            </div>
+          </div>
+
+          <div class="rating-points">
+            ${escapeHtml(points)}
+            <span>ОЧКОВ</span>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
 
   modal.innerHTML = `
-
     <div class="rating-window">
-
       <div class="rating-header">
+        <button class="rating-close" id="ratingClose">×</button>
 
-        <button
-          class="rating-close"
-          id="ratingClose"
-          type="button"
-        >
-          ×
-        </button>
+        <div class="rating-crown">🏆</div>
 
-        <div class="rating-icon">
-          🏆
-        </div>
-
-        <div class="rating-title">
+        <h2 class="rating-title">
           РЕЙТИНГ DODICI
-        </div>
+        </h2>
 
         <div class="rating-subtitle">
           Лучшие игроки
         </div>
-
       </div>
 
       <div class="rating-list">
-
         ${
           rows ||
-          `
-            <div class="rating-empty">
-              🏆
-              <br>
-              <br>
-              Рейтинг пока пуст
-            </div>
-          `
+          `<div class="rating-empty">
+            🏆<br><br>
+            Рейтинг пока пуст
+          </div>`
         }
-
       </div>
-
     </div>
-
   `;
 
+  document.body.appendChild(modal);
 
-  document.body.appendChild(
-    modal
-  );
+  requestAnimationFrame(() => {
+    modal.classList.add("visible");
+  });
 
-  requestAnimationFrame(
-    () => {
-      modal.classList.add(
-        "visible"
-      );
+  const closeRating = () => {
+    modal.classList.remove("visible");
+
+    setTimeout(() => {
+      modal.remove();
+    }, 300);
+  };
+
+  document
+    .getElementById("ratingClose")
+    .addEventListener("click", closeRating);
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) {
+      closeRating();
     }
-  );
-
-
-  const closeRating =
-    () => {
-
-      modal.classList.remove(
-        "visible"
-      );
-
-      setTimeout(
-        () => {
-          modal.remove();
-        },
-        300
-      );
-    };
-
-
-  modal
-    .querySelector(
-      "#ratingClose"
-    )
-    .addEventListener(
-      "click",
-      closeRating
-    );
-
-
-  modal.addEventListener(
-    "click",
-    event => {
-
-      if (
-        event.target === modal
-      ) {
-        closeRating();
-      }
-
-    }
-  );
+  });
 }
 
+ratingButton.addEventListener("click", async () => {
+  closeMenu();
 
-/* =========================
-   RATING BUTTON
-========================= */
+  try {
+    ratingButton.disabled = true;
 
-ratingButton.addEventListener(
-  "click",
-  async () => {
+    const response = await fetch(`${API_URL}/rating`);
 
-    closeMenu();
+    const data = await response.json();
 
-    try {
-
-      ratingButton.disabled =
-        true;
-
-      const response =
-        await fetch(
-          `${API_URL}/rating`
-        );
-
-      const data =
-        await response.json();
-
-      if (!data.ok) {
-
-        throw new Error(
-          data.error ||
-          "Не удалось загрузить рейтинг"
-        );
-      }
-
-      showRatingModal(
-        data.rating || []
+    if (!data.ok) {
+      throw new Error(
+        data.error || "Не удалось загрузить рейтинг"
       );
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert(
-        "❌ Не удалось загрузить рейтинг"
-      );
-
-    } finally {
-
-      ratingButton.disabled =
-        false;
     }
 
+    showRatingModal(data.rating || []);
+  } catch (error) {
+    console.error(error);
+
+    alert("❌ Не удалось загрузить рейтинг");
+  } finally {
+    ratingButton.disabled = false;
   }
-);
+});
 
+profileButton.addEventListener("click", async () => {
+  closeMenu();
 
-/* =========================
-   PROFILE
-========================= */
+  try {
+    profileButton.disabled = true;
 
-profileButton.addEventListener(
-  "click",
-  async () => {
-
-    closeMenu();
-
-    try {
-
-      profileButton.disabled =
-        true;
-
-      const response =
-        await fetch(
-          `${API_URL}/player/profile`,
-          {
-            method: "GET",
-
-            headers: {
-              "X-Telegram-Init-Data":
-                telegramInitData
-            }
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if (!data.ok) {
-
-        throw new Error(
-          data.error ||
-          "Не удалось загрузить профиль"
-        );
+    const response = await fetch(
+      `${API_URL}/player/profile`,
+      {
+        method: "GET",
+        headers: {
+          "X-Telegram-Init-Data": telegramInitData
+        }
       }
-
-      const player =
-        data.player;
-
-      document
-        .getElementById(
-          "profileModal"
-        )
-        ?.remove();
-
-
-      const modal =
-        document.createElement(
-          "div"
-        );
-
-      modal.id =
-        "profileModal";
-
-      modal.className =
-        "profile-modal";
-
-
-      modal.innerHTML = `
-
-        <div class="profile-window">
-
-          <button
-            class="profile-close"
-            id="profileClose"
-            type="button"
-          >
-            ×
-          </button>
-
-          <div class="profile-avatar">
-            👤
-          </div>
-
-          <div class="profile-title">
-            ПРОФИЛЬ
-          </div>
-
-          <div class="profile-name">
-            ${escapeHtml(
-              player.first_name ||
-              "Игрок"
-            )}
-          </div>
-
-          <div class="profile-stats">
-
-            <div class="profile-stat">
-
-              <div class="profile-stat-icon">
-                🎮
-              </div>
-
-              <div class="profile-stat-value">
-                ${escapeHtml(
-                  player.games_played
-                )}
-              </div>
-
-              <div class="profile-stat-label">
-                ИГР
-              </div>
-
-            </div>
-
-
-            <div class="profile-stat">
-
-              <div class="profile-stat-icon">
-                🏆
-              </div>
-
-              <div class="profile-stat-value">
-                ${escapeHtml(
-                  player.wins
-                )}
-              </div>
-
-              <div class="profile-stat-label">
-                ПОБЕД
-              </div>
-
-            </div>
-
-
-            <div class="profile-stat">
-
-              <div class="profile-stat-icon">
-                💥
-              </div>
-
-              <div class="profile-stat-value">
-                ${escapeHtml(
-                  player.losses
-                )}
-              </div>
-
-              <div class="profile-stat-label">
-                ПОРАЖЕНИЙ
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <div class="profile-best">
-
-            <div class="profile-best-label">
-              ЛУЧШИЙ УРОВЕНЬ
-            </div>
-
-            <div class="profile-best-value">
-
-              ${escapeHtml(
-                player.best_level
-              )}
-
-              <span>
-                / 12
-              </span>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      `;
-
-
-      document.body.appendChild(
-        modal
-      );
-
-
-      requestAnimationFrame(
-        () => {
-
-          modal.classList.add(
-            "visible"
-          );
-
-        }
-      );
-
-
-      const closeProfile =
-        () => {
-
-          modal.classList.remove(
-            "visible"
-          );
-
-          setTimeout(
-            () => {
-              modal.remove();
-            },
-            300
-          );
-        };
-
-
-      modal
-        .querySelector(
-          "#profileClose"
-        )
-        .addEventListener(
-          "click",
-          closeProfile
-        );
-
-
-      modal.addEventListener(
-        "click",
-        event => {
-
-          if (
-            event.target === modal
-          ) {
-            closeProfile();
-          }
-
-        }
-      );
-
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert(
-        "❌ Не удалось загрузить профиль"
-      );
-
-    } finally {
-
-      profileButton.disabled =
-        false;
-    }
-
-  }
-);
-
-
-/* =========================
-   HOW TO PLAY
-========================= */
-
-howButton.addEventListener(
-  "click",
-  () => {
-
-    closeMenu();
-
-    alert(
-      "❓ КАК ИГРАТЬ\n\n" +
-      "Выбери одну из трёх карт.\n" +
-      "Угадаешь — переходишь дальше.\n" +
-      "Ошибёшься — игра заканчивается.\n\n" +
-      "Пройди все 12 уровней!"
     );
-  }
-);
 
+    const data = await response.json();
 
-/* =========================
-   SETTINGS
-========================= */
-
-settingsButton.addEventListener(
-  "click",
-  () => {
-
-    closeMenu();
-
-    document
-      .getElementById(
-        "settingsModal"
-      )
-      ?.remove();
-
-
-    const modal =
-      document.createElement(
-        "div"
+    if (!data.ok) {
+      throw new Error(
+        data.error || "Не удалось загрузить профиль"
       );
+    }
 
-    modal.id =
-      "settingsModal";
+    const player = data.player;
 
-    modal.className =
-      "settings-modal";
+    const oldProfile = document.getElementById(
+      "profileModal"
+    );
 
+    if (oldProfile) {
+      oldProfile.remove();
+    }
 
-    modal.innerHTML = `
+    const profileModal = document.createElement("div");
 
-      <div class="settings-window">
+    profileModal.id = "profileModal";
+    profileModal.className = "profile-modal";
+
+    profileModal.innerHTML = `
+      <div class="profile-window">
 
         <button
-          class="settings-close"
-          id="settingsClose"
+          class="profile-close"
+          id="profileClose"
           type="button"
+          aria-label="Закрыть профиль"
         >
           ×
         </button>
 
-        <div class="settings-icon">
-          ⚙️
+        <div class="profile-avatar">
+          👤
         </div>
 
-        <div class="settings-title">
-          НАСТРОЙКИ
+        <div class="profile-title">
+          ПРОФИЛЬ
         </div>
 
+        <div class="profile-name">
+          ${escapeHtml(player.first_name || "Игрок")}
+        </div>
 
-        <div class="settings-list">
+        <div class="profile-stats">
 
-          <div class="settings-row">
-
-            <div class="settings-row-left">
-
-              <span class="settings-row-icon">
-                🔊
-              </span>
-
-              <div>
-
-                <div class="settings-row-title">
-                  Звуки
-                </div>
-
-                <div class="settings-row-subtitle">
-                  Звуковые эффекты игры
-                </div>
-
-              </div>
-
+          <div class="profile-stat">
+            <div class="profile-stat-icon">
+              🎮
             </div>
 
+            <div class="profile-stat-value">
+              ${escapeHtml(player.games_played)}
+            </div>
 
-            <button
-              class="settings-toggle"
-              id="soundToggle"
-              type="button"
-            >
-              <span></span>
-            </button>
-
+            <div class="profile-stat-label">
+              ИГР
+            </div>
           </div>
 
-
-          <div class="settings-row">
-
-            <div class="settings-row-left">
-
-              <span class="settings-row-icon">
-                📳
-              </span>
-
-              <div>
-
-                <div class="settings-row-title">
-                  Вибрация
-                </div>
-
-                <div class="settings-row-subtitle">
-                  Тактильный отклик
-                </div>
-
-              </div>
-
+          <div class="profile-stat">
+            <div class="profile-stat-icon">
+              🏆
             </div>
 
+            <div class="profile-stat-value">
+              ${escapeHtml(player.wins)}
+            </div>
 
-            <button
-              class="settings-toggle"
-              id="vibrationToggle"
-              type="button"
-            >
-              <span></span>
-            </button>
-
+            <div class="profile-stat-label">
+              ПОБЕД
+            </div>
           </div>
 
-
-          <div class="settings-row">
-
-            <div class="settings-row-left">
-
-              <span class="settings-row-icon">
-                🌙
-              </span>
-
-              <div>
-
-                <div class="settings-row-title">
-                  Тема
-                </div>
-
-                <div class="settings-row-subtitle">
-                  Тёмная тема
-                </div>
-
-              </div>
-
+          <div class="profile-stat">
+            <div class="profile-stat-icon">
+              💥
             </div>
 
-
-            <div class="settings-theme">
-              DARK
+            <div class="profile-stat-value">
+              ${escapeHtml(player.losses)}
             </div>
 
+            <div class="profile-stat-label">
+              ПОРАЖЕНИЙ
+            </div>
+          </div>
+
+        </div>
+
+        <div class="profile-best">
+
+          <div class="profile-best-label">
+            ЛУЧШИЙ УРОВЕНЬ
+          </div>
+
+          <div class="profile-best-value">
+            ${escapeHtml(player.best_level)}
+            <span>/ 12</span>
           </div>
 
         </div>
 
       </div>
-
     `;
 
+    document.body.appendChild(profileModal);
 
-    document.body.appendChild(
-      modal
-    );
+    requestAnimationFrame(() => {
+      profileModal.classList.add("visible");
+    });
 
+    const closeProfile = () => {
+      profileModal.classList.remove("visible");
 
-    requestAnimationFrame(
-      () => {
+      setTimeout(() => {
+        profileModal.remove();
+      }, 300);
+    };
 
-        modal.classList.add(
-          "visible"
-        );
+    document
+      .getElementById("profileClose")
+      .addEventListener("click", closeProfile);
 
+    profileModal.addEventListener("click", (event) => {
+      if (event.target === profileModal) {
+        closeProfile();
       }
-    );
+    });
 
+  } catch (error) {
+    console.error(error);
 
-    const closeSettings =
-      () => {
-
-        modal.classList.remove(
-          "visible"
-        );
-
-        setTimeout(
-          () => {
-            modal.remove();
-          },
-          300
-        );
-      };
-
-
-    modal
-      .querySelector(
-        "#settingsClose"
-      )
-      .addEventListener(
-        "click",
-        closeSettings
-      );
-
-
-    modal.addEventListener(
-      "click",
-      event => {
-
-        if (
-          event.target === modal
-        ) {
-          closeSettings();
-        }
-
-      }
-    );
-
-
-    /* =====================
-       SETTINGS STATE
-    ===================== */
-
-    const soundToggle =
-      modal.querySelector(
-        "#soundToggle"
-      );
-
-    const vibrationToggle =
-      modal.querySelector(
-        "#vibrationToggle"
-      );
-
-
-    const soundEnabled =
-      localStorage.getItem(
-        "dodici_sound"
-      ) !== "off";
-
-
-    const vibrationEnabled =
-      localStorage.getItem(
-        "dodici_vibration"
-      ) !== "off";
-
-
-    soundToggle.classList.toggle(
-      "active",
-      soundEnabled
-    );
-
-
-    vibrationToggle.classList.toggle(
-      "active",
-      vibrationEnabled
-    );
-
-
-    /* =====================
-       SOUND TOGGLE
-    ===================== */
-
-    soundToggle.addEventListener(
-      "click",
-      () => {
-
-        const enabled =
-          soundToggle.classList.toggle(
-            "active"
-          );
-
-        localStorage.setItem(
-          "dodici_sound",
-          enabled
-            ? "on"
-            : "off"
-        );
-      }
-    );
-
-
-    /* =====================
-       VIBRATION TOGGLE
-    ===================== */
-
-    vibrationToggle.addEventListener(
-      "click",
-      () => {
-
-        const enabled =
-          vibrationToggle.classList.toggle(
-            "active"
-          );
-
-        localStorage.setItem(
-          "dodici_vibration",
-          enabled
-            ? "on"
-            : "off"
-        );
-      }
-    );
-
+    alert("❌ Не удалось загрузить профиль");
+  } finally {
+    profileButton.disabled = false;
   }
-);
+});
+
+howButton.addEventListener("click", () => {
+  closeMenu();
+
+  alert(
+    "❓ КАК ИГРАТЬ\n\n" +
+    "Выбери одну из трёх карт.\n" +
+    "Угадаешь — переходишь дальше.\n" +
+    "Ошибёшься — игра заканчивается.\n\n" +
+    "Пройди все 12 уровней!"
+  );
+});
+
+settingsButton.addEventListener("click", () => {
+  closeMenu();
+
+  const oldSettings = document.getElementById("settingsModal");
+
+  if (oldSettings) {
+    oldSettings.remove();
+  }
+
+  const settingsModal = document.createElement("div");
+
+  settingsModal.id = "settingsModal";
+  settingsModal.className = "settings-modal";
+
+  settingsModal.innerHTML = `
+    <div class="settings-window">
+
+      <button
+        class="settings-close"
+        id="settingsClose"
+        type="button"
+        aria-label="Закрыть настройки"
+      >
+        ×
+      </button>
+
+      <div class="settings-icon">
+        ⚙️
+      </div>
+
+      <div class="settings-title">
+        НАСТРОЙКИ
+      </div>
+
+      <div class="settings-list">
+
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <span class="settings-row-icon">🔊</span>
+
+            <div>
+              <div class="settings-row-title">
+                Звуки
+              </div>
+
+              <div class="settings-row-subtitle">
+                Звуковые эффекты игры
+              </div>
+            </div>
+          </div>
+
+          <button
+            class="settings-toggle active"
+            id="soundToggle"
+            type="button"
+            aria-label="Звуки"
+          >
+            <span></span>
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <span class="settings-row-icon">📳</span>
+
+            <div>
+              <div class="settings-row-title">
+                Вибрация
+              </div>
+
+              <div class="settings-row-subtitle">
+                Тактильный отклик
+              </div>
+            </div>
+          </div>
+
+          <button
+            class="settings-toggle active"
+            id="vibrationToggle"
+            type="button"
+            aria-label="Вибрация"
+          >
+            <span></span>
+          </button>
+        </div>
+
+        <div class="settings-row">
+          <div class="settings-row-left">
+            <span class="settings-row-icon">🌙</span>
+
+            <div>
+              <div class="settings-row-title">
+                Тема
+              </div>
+
+              <div class="settings-row-subtitle">
+                Тёмная тема
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-theme">
+            DARK
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(settingsModal);
+
+  requestAnimationFrame(() => {
+    settingsModal.classList.add("visible");
+  });
+
+  const closeSettings = () => {
+    settingsModal.classList.remove("visible");
+
+    setTimeout(() => {
+      settingsModal.remove();
+    }, 300);
+  };
+
+  document
+    .getElementById("settingsClose")
+    .addEventListener("click", closeSettings);
+
+  settingsModal.addEventListener("click", (event) => {
+    if (event.target === settingsModal) {
+      closeSettings();
+    }
+  });
+
+  const soundToggle = document.getElementById("soundToggle");
+  const vibrationToggle = document.getElementById("vibrationToggle");
+
+  const soundEnabled =
+    localStorage.getItem("dodici_sound") !== "off";
+
+  const vibrationEnabled =
+    localStorage.getItem("dodici_vibration") !== "off";
+
+  soundToggle.classList.toggle(
+    "active",
+    soundEnabled
+  );
+
+  vibrationToggle.classList.toggle(
+    "active",
+    vibrationEnabled
+  );
+
+  soundToggle.addEventListener("click", () => {
+    const enabled =
+      soundToggle.classList.toggle("active");
+
+    localStorage.setItem(
+      "dodici_sound",
+      enabled ? "on" : "off"
+    );
+  });
+
+  vibrationToggle.addEventListener("click", () => {
+    const enabled =
+      vibrationToggle.classList.toggle("active");
+
+    localStorage.setItem(
+      "dodici_vibration",
+      enabled ? "on" : "off"
+    );
+  });
+});
