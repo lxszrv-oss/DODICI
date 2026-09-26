@@ -226,6 +226,7 @@ def get_player(telegram_id):
                     losses,
                     points,
                     best_level,
+                    attempts,
                     created_at,
                     updated_at
                 FROM players
@@ -260,6 +261,7 @@ def update_player_after_game(
                     losses = losses + :losses,
                     best_level = GREATEST(
                         best_level,
+                        attempts,
                         :level
                     ),
                     updated_at = CURRENT_TIMESTAMP
