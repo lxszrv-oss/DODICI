@@ -2316,3 +2316,290 @@ footer {
     border-radius: 20px !important;
   }
 }
+/* ============================================================
+   REFERRAL MODAL
+   ============================================================ */
+
+.referral-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, .78);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  opacity: 0;
+  visibility: hidden;
+
+  transition:
+    opacity .22s ease,
+    visibility .22s ease;
+}
+
+.referral-modal.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.referral-window {
+  position: relative;
+
+  width: min(100%, 390px);
+
+  padding: 30px 22px 24px;
+
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 24px;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(255, 190, 60, .13),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      #171b23 0%,
+      #0b0e13 100%
+    );
+
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.7),
+    0 0 60px rgba(255,180,40,.06),
+    inset 0 1px rgba(255,255,255,.04);
+
+  transform: translateY(18px) scale(.96);
+
+  transition:
+    transform .25s cubic-bezier(.2,.8,.2,1);
+}
+
+.referral-modal.visible .referral-window {
+  transform: translateY(0) scale(1);
+}
+
+.referral-close {
+  position: absolute;
+
+  top: 12px;
+  right: 12px;
+
+  width: 38px;
+  height: 38px;
+
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 11px;
+
+  background: rgba(255,255,255,.045);
+
+  color: #aeb4bf;
+
+  font-size: 25px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background .18s ease,
+    color .18s ease,
+    transform .18s ease;
+}
+
+.referral-close:hover {
+  background: rgba(255,255,255,.10);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.referral-icon {
+  width: 70px;
+  height: 70px;
+
+  margin: 0 auto 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,194,61,.18),
+      rgba(255,140,0,.06)
+    );
+
+  border: 1px solid rgba(255,190,50,.20);
+
+  font-size: 34px;
+
+  box-shadow:
+    0 12px 35px rgba(255,160,20,.10);
+}
+
+.referral-title {
+  text-align: center;
+
+  color: #f5f6f8;
+
+  font-size: 24px;
+  font-weight: 900;
+
+  letter-spacing: .02em;
+}
+
+.referral-reward {
+  margin-top: 8px;
+
+  text-align: center;
+
+  color: #aeb4bf;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.referral-reward span {
+  color: #ffd45a;
+
+  font-size: 30px;
+  font-weight: 950;
+
+  text-shadow:
+    0 0 20px rgba(255,190,50,.25);
+}
+
+.referral-description {
+  margin: 18px 5px 20px;
+
+  text-align: center;
+
+  color: #9299a6;
+
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.referral-description b {
+  color: #e8ebef;
+}
+
+.referral-link-box {
+  padding: 13px;
+
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 14px;
+
+  background: rgba(255,255,255,.035);
+}
+
+.referral-link-label {
+  margin-bottom: 7px;
+
+  color: #737b89;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: .12em;
+}
+
+.referral-link {
+  overflow: hidden;
+
+  color: #cbd0d8;
+
+  font-size: 12px;
+  line-height: 1.45;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.referral-copy {
+  width: 100%;
+
+  margin-top: 12px;
+  padding: 15px;
+
+  border: 1px solid rgba(255,194,61,.25);
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,194,61,.16),
+      rgba(255,145,0,.08)
+    );
+
+  color: #ffd96a;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    border-color .18s ease;
+}
+
+.referral-copy:hover {
+  transform: translateY(-1px);
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,194,61,.23),
+      rgba(255,145,0,.12)
+    );
+
+  border-color: rgba(255,194,61,.40);
+}
+
+.referral-copy:active {
+  transform: scale(.985);
+}
+
+.referral-copy.copied {
+  border-color: rgba(110,220,150,.35);
+  background: rgba(80,180,120,.10);
+  color: #8ee0ac;
+}
+
+.referral-note {
+  margin-top: 14px;
+
+  text-align: center;
+
+  color: #626a77;
+
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .referral-modal {
+    padding: 14px;
+  }
+
+  .referral-window {
+    padding: 27px 17px 20px;
+    border-radius: 21px;
+  }
+
+  .referral-icon {
+    width: 64px;
+    height: 64px;
+  }
+}

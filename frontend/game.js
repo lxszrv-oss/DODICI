@@ -970,10 +970,12 @@ profileButton.addEventListener("click", async () => {
     profileButton.disabled = false;
   }
 });
+
 referralButton.addEventListener("click", () => {
   closeMenu();
 
-  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const telegramUser =
+    window.Telegram?.WebApp?.initDataUnsafe?.user;
 
   if (!telegramUser?.id) {
     alert("Открой игру через Telegram");
@@ -985,19 +987,135 @@ referralButton.addEventListener("click", () => {
   const referralLink =
     `https://t.me/${botUsername}?startapp=ref_${telegramUser.id}`;
 
-  navigator.clipboard
-    .writeText(referralLink)
-    .then(() => {
-      alert(
-        "🎁 Твоя реферальная ссылка скопирована!\n\n" +
-        "Отправь её другу.\n" +
-        "После его первого входа ты получишь +50 попыток."
-      );
-    })
-    .catch(() => {
-      prompt("Скопируй свою реферальную ссылку:", referralLink);
+  const oldReferral =
+    document.getElementById("referralModal");
+
+  if (oldReferral) {
+    oldReferral.remove();
+  }
+
+  const referralModal =
+    document.createElement("div");
+
+  referralModal.id = "referralModal";
+  referralModal.className = "referral-modal";
+
+  referralModal.innerHTML = `
+    <div class="referral-window">
+
+      <button
+        class="referral-close"
+        id="referralClose"
+        type="button"
+      >
+        ×
+      </button>
+
+      <div class="referral-icon">
+        🎁
+      </div>
+
+      <div class="referral-title">
+        Пригласи друга
+      </div>
+
+      <div class="referral-reward">
+        <span>+50</span>
+        попыток
+      </div>
+
+      <div class="referral-description">
+        Отправь свою ссылку другу.
+        <br>
+        Когда он впервые зайдёт в игру,
+        ты получишь <b>50 попыток</b>.
+      </div>
+
+      <div class="referral-link-box">
+        <div class="referral-link-label">
+          ТВОЯ ССЫЛКА
+        </div>
+
+        <div class="referral-link">
+          ${referralLink}
+        </div>
+      </div>
+
+      <button
+        class="referral-copy"
+        id="referralCopy"
+        type="button"
+      >
+        📋 Скопировать ссылку
+      </button>
+
+      <div class="referral-note">
+        Награда начисляется один раз
+        за каждого нового игрока.
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(referralModal);
+
+  requestAnimationFrame(() => {
+    referralModal.classList.add("visible");
+  });
+
+  const closeReferral = () => {
+    referralModal.classList.remove("visible");
+
+    setTimeout(() => {
+      referralModal.remove();
+    }, 220);
+  };
+
+  document
+    .getElementById("referralClose")
+    .addEventListener("click", closeReferral);
+
+  referralModal.addEventListener("click", (event) => {
+    if (event.target === referralModal) {
+      closeReferral();
+    }
+  });
+
+  document
+    .getElementById("referralCopy")
+    .addEventListener("click", async () => {
+
+      try {
+        await navigator.clipboard.writeText(
+          referralLink
+        );
+
+        const button =
+          document.getElementById("referralCopy");
+
+        button.textContent =
+          "✓ Ссылка скопирована";
+
+        button.classList.add("copied");
+
+        setTimeout(() => {
+          if (button) {
+            button.textContent =
+              "📋 Скопировать ссылку";
+
+            button.classList.remove("copied");
+          }
+        }, 1800);
+
+      } catch (error) {
+        prompt(
+          "Скопируй свою реферальную ссылку:",
+          referralLink
+        );
+      }
     });
 });
+
 
 howButton.addEventListener("click", () => {
   closeMenu();
