@@ -130,6 +130,17 @@ with engine.begin() as connection:
             """
         )
     )
+    connection.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS referrals (
+                invited_telegram_id BIGINT PRIMARY KEY,
+                referrer_telegram_id BIGINT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+    )
 
 
 # ============================================================
@@ -306,6 +317,101 @@ def refill_attempts(telegram_id):
         )
 
         return result.scalar()
+def process_referral(telegram_id, referral_code):
+
+    if not referral_code:
+        return False
+
+    if not referral_code.startswith("ref_"):
+        return False
+
+    try:
+        referrer_id = int(referral_code[4:])
+    except ValueError:
+        return False
+
+    # Нельзя пригласить самого себя
+    if referrer_id == telegram_id:
+        return False
+
+    require_database()
+
+    with engine.begin() as connection:
+
+        # Проверяем пригласившего
+        referrer = connection.execute(
+            text(
+                """
+                SELECT telegram_id
+                FROM players
+                WHERE telegram_id = :telegram_id
+                """
+            ),
+            {
+                "telegram_id": referrer_id
+            },
+        ).first()
+
+        if not referrer:
+            return False
+
+        # Проверяем, был ли пользователь
+        # уже засчитан рефералом
+        existing = connection.execute(
+            text(
+                """
+                SELECT invited_telegram_id
+                FROM referrals
+                WHERE invited_telegram_id = :telegram_id
+                """
+            ),
+            {
+                "telegram_id": telegram_id
+            },
+        ).first()
+
+        if existing:
+            return False
+
+        # Регистрируем реферала
+        connection.execute(
+            text(
+                """
+                INSERT INTO referrals (
+                    invited_telegram_id,
+                    referrer_telegram_id
+                )
+                VALUES (
+                    :invited_telegram_id,
+                    :referrer_telegram_id
+                )
+                """
+            ),
+            {
+                "invited_telegram_id": telegram_id,
+                "referrer_telegram_id": referrer_id
+            },
+        )
+
+        # Начисляем +50 попыток
+        connection.execute(
+            text(
+                """
+                UPDATE players
+                SET
+                    attempts = attempts + 50,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE telegram_id = :telegram_id
+                """
+            ),
+            {
+                "telegram_id": referrer_id
+            },
+        )
+
+    return True
+
+        
 
 
 def get_player(telegram_id):
@@ -516,6 +622,13 @@ def validate_telegram_init_data(init_data: str):
             "Telegram user id missing"
         )
 
+    user["start_param"] = parsed.get("start_param")
+
+    logging.info(
+        "Telegram start_param: %s",
+        user.get("start_param")
+    )
+
     return user
 
 
@@ -577,6 +690,11 @@ def auth_telegram(
         )
 
         ensure_player(user)
+        
+        process_referral(
+            user.get("id"),
+            user.get("start_param")
+        )
 
         refill_attempts(
             user.get("id")

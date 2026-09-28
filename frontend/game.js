@@ -28,6 +28,7 @@ const menuOverlay = document.getElementById("menuOverlay");
 
 const ratingButton = document.getElementById("ratingButton");
 const profileButton = document.getElementById("profileButton");
+const referralButton = document.getElementById("referralButton");
 const howButton = document.getElementById("howButton");
 const settingsButton = document.getElementById("settingsButton");
 
@@ -968,6 +969,34 @@ profileButton.addEventListener("click", async () => {
   } finally {
     profileButton.disabled = false;
   }
+});
+referralButton.addEventListener("click", () => {
+  closeMenu();
+
+  const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+
+  if (!telegramUser?.id) {
+    alert("Открой игру через Telegram");
+    return;
+  }
+
+  const botUsername = "DODICI_GameBot";
+
+  const referralLink =
+    `https://t.me/${botUsername}?startapp=ref_${telegramUser.id}`;
+
+  navigator.clipboard
+    .writeText(referralLink)
+    .then(() => {
+      alert(
+        "🎁 Твоя реферальная ссылка скопирована!\n\n" +
+        "Отправь её другу.\n" +
+        "После его первого входа ты получишь +50 попыток."
+      );
+    })
+    .catch(() => {
+      prompt("Скопируй свою реферальную ссылку:", referralLink);
+    });
 });
 
 howButton.addEventListener("click", () => {
