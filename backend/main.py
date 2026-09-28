@@ -803,6 +803,7 @@ def player_profile(
 # START GAME
 # ============================================================
 
+
 @app.post("/game/start")
 def start_game(
     x_telegram_init_data: str = Header(
@@ -820,11 +821,24 @@ def start_game(
 
         telegram_id = user.get("id")
 
-        # Начисляем все накопившиеся
-        # полные часы.
+        # Начисляем накопившиеся попытки
         refill_attempts(
             telegram_id
         )
+
+        # Проверяем наличие попыток,
+        # но НЕ списываем её здесь.
+        player = get_player(
+            telegram_id
+        )
+
+        if not player or player["attempts"] <= 0:
+
+            return {
+                "ok": False,
+                "error": "No attempts left",
+                "attempts": 0,
+            }
 
         game_id = str(
             uuid.uuid4()
@@ -839,44 +853,6 @@ def start_game(
         )
 
         with engine.begin() as connection:
-
-            attempt_result = connection.execute(
-                text(
-                    """
-                    UPDATE players
-
-                    SET
-                        attempts =
-                            attempts - 1,
-
-                        updated_at =
-                            CURRENT_TIMESTAMP
-
-                    WHERE telegram_id =
-                        :telegram_id
-
-                    AND attempts > 0
-
-                    RETURNING attempts
-                    """
-                ),
-                {
-                    "telegram_id":
-                        telegram_id,
-                },
-            )
-
-            remaining_attempts = (
-                attempt_result.scalar()
-            )
-
-            if remaining_attempts is None:
-
-                return {
-                    "ok": False,
-                    "error": "No attempts left",
-                    "attempts": 0,
-                }
 
             connection.execute(
                 text(
@@ -916,7 +892,7 @@ def start_game(
             "game_id": game_id,
             "level": 1,
             "winning_card": winning_card,
-            "attempts": remaining_attempts,
+            "attempts": player["attempts"],
         }
 
     except Exception as error:
@@ -929,6 +905,8 @@ def start_game(
             "ok": False,
             "error": str(error),
         }
+
+
 
 
 # ============================================================
@@ -990,6 +968,51 @@ def game_choice(
         correct = (
             payload.card == winning_card
         )
+                # ----------------------------------------------------
+        # SPEND ONE ATTEMPT ON FIRST CARD CHOICE
+        # ----------------------------------------------------
+
+        if payload.level == 1:
+
+            with engine.begin() as connection:
+
+                attempt_result = connection.execute(
+                    text(
+                        """
+                        UPDATE players
+
+                        SET
+                            attempts =
+                                attempts - 1,
+
+                            updated_at =
+                                CURRENT_TIMESTAMP
+
+                        WHERE telegram_id =
+                            :telegram_id
+
+                        AND attempts > 0
+
+                        RETURNING attempts
+                        """
+                    ),
+                    {
+                        "telegram_id":
+                            user.get("id")
+                    },
+                )
+
+                remaining_attempts = (
+                    attempt_result.scalar()
+                )
+
+            if remaining_attempts is None:
+
+                return {
+                    "ok": False,
+                    "error": "No attempts left",
+                    "attempts": 0,
+                }
 
         # ----------------------------------------------------
         # WRONG CARD
