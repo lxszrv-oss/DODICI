@@ -1796,3 +1796,112 @@ footer {
     transform: none;
   }
 }
+/* ============================================================
+   DODICI — BRIGHT CARD FLASH
+   ============================================================ */
+
+.cards .card {
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+/* Правильная карта */
+.cards .card.correct,
+.cards .card.win,
+.cards .card.success {
+  color: transparent;
+
+  border-color: #ffd75a !important;
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(255, 220, 80, 0.55),
+      rgba(255, 180, 0, 0.18) 45%,
+      #111 75%
+    ) !important;
+
+  box-shadow:
+    0 0 12px rgba(255, 210, 60, 0.95),
+    0 0 30px rgba(255, 190, 20, 0.85),
+    0 0 65px rgba(255, 180, 0, 0.55),
+    inset 0 0 35px rgba(255, 210, 60, 0.45) !important;
+
+  animation: dodiciGoldFlash 0.65s ease-in-out;
+}
+
+/* Неправильная карта */
+.cards .card.wrong,
+.cards .card.lose,
+.cards .card.error {
+  color: transparent;
+
+  border-color: #ff3030 !important;
+
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(255, 40, 40, 0.65),
+      rgba(180, 0, 0, 0.22) 45%,
+      #111 75%
+    ) !important;
+
+  box-shadow:
+    0 0 12px rgba(255, 30, 30, 1),
+    0 0 32px rgba(255, 20, 20, 0.9),
+    0 0 70px rgba(255, 0, 0, 0.6),
+    inset 0 0 38px rgba(255, 30, 30, 0.5) !important;
+
+  animation: dodiciRedFlash 0.65s ease-in-out;
+}
+
+@keyframes dodiciGoldFlash {
+  0% {
+    box-shadow:
+      0 0 0 rgba(255, 210, 60, 0),
+      inset 0 0 0 rgba(255, 210, 60, 0);
+  }
+
+  35% {
+    box-shadow:
+      0 0 25px rgba(255, 220, 70, 1),
+      0 0 65px rgba(255, 190, 20, 0.95),
+      0 0 100px rgba(255, 170, 0, 0.7),
+      inset 0 0 45px rgba(255, 220, 70, 0.65);
+  }
+
+  100% {
+    box-shadow:
+      0 0 12px rgba(255, 210, 60, 0.95),
+      0 0 30px rgba(255, 190, 20, 0.85),
+      0 0 65px rgba(255, 180, 0, 0.55),
+      inset 0 0 35px rgba(255, 210, 60, 0.45);
+  }
+}
+
+@keyframes dodiciRedFlash {
+  0% {
+    box-shadow:
+      0 0 0 rgba(255, 30, 30, 0),
+      inset 0 0 0 rgba(255, 30, 30, 0);
+  }
+
+  35% {
+    box-shadow:
+      0 0 25px rgba(255, 30, 30, 1),
+      0 0 65px rgba(255, 20, 20, 0.95),
+      0 0 105px rgba(255, 0, 0, 0.75),
+      inset 0 0 48px rgba(255, 30, 30, 0.7);
+  }
+
+  100% {
+    box-shadow:
+      0 0 12px rgba(255, 30, 30, 1),
+      0 0 32px rgba(255, 20, 20, 0.9),
+      0 0 70px rgba(255, 0, 0, 0.6),
+      inset 0 0 38px rgba(255, 30, 30, 0.5);
+  }
+}
