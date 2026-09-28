@@ -1521,17 +1521,7 @@ header {
   transform: scale(.985) !important;
 }
 
-.card.good {
-  border-color: rgba(157,187,157,.65) !important;
-  background: rgba(157,187,157,.09) !important;
-  box-shadow: 0 0 24px rgba(157,187,157,.10) !important;
-}
 
-.card.bad {
-  border-color: rgba(196,127,127,.65) !important;
-  background: rgba(196,127,127,.09) !important;
-  box-shadow: 0 0 24px rgba(196,127,127,.09) !important;
-}
 
 #status {
   color: var(--d-muted) !important;

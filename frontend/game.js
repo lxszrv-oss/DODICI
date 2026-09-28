@@ -141,8 +141,10 @@ async function loadPlayerAttempts() {
 }
 loadPlayerAttempts();
 
+
 function reset() {
   cards.forEach((card) => {
+    // Полностью сбрасываем состояния предыдущего уровня
     card.classList.remove(
       "good",
       "bad",
@@ -151,16 +153,26 @@ function reset() {
       "win",
       "lose",
       "success",
-      "error"
+      "error",
+      "card-enter"
     );
 
+    // Удаляем возможные inline-эффекты
     card.style.removeProperty("border-color");
     card.style.removeProperty("box-shadow");
     card.style.removeProperty("background");
+    card.style.removeProperty("animation");
 
+    // Принудительно возвращаем обычное состояние
+    card.style.opacity = "1";
+    card.style.transform = "";
+    card.style.filter = "";
+
+    // Возвращаем рубашку карты
     card.textContent = "";
   });
 }
+
 
 function finish(title, text) {
   endTitle.textContent = title;
