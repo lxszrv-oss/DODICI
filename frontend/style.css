@@ -1796,3 +1796,291 @@ footer {
     transform: none;
   }
 }
+/* ============================================================
+   DODICI — UNIFIED MENU DESIGN
+   ============================================================ */
+
+:root {
+  --menu-bg: #0b0e13;
+  --menu-panel: #11151c;
+  --menu-panel-2: #151a22;
+  --menu-line: rgba(255,255,255,.09);
+  --menu-line-hover: rgba(255,255,255,.18);
+  --menu-text: #f1f3f6;
+  --menu-muted: #858c98;
+  --menu-accent: #d9dde5;
+}
+
+/* SIDE MENU */
+
+.side-menu {
+  background:
+    linear-gradient(
+      180deg,
+      #11151c 0%,
+      #080a0e 100%
+    ) !important;
+
+  border-right: 1px solid var(--menu-line) !important;
+  box-shadow: 24px 0 80px rgba(0,0,0,.55) !important;
+  padding: 28px 18px !important;
+}
+
+.side-menu-title {
+  color: var(--menu-text) !important;
+  margin-bottom: 28px !important;
+  padding: 0 4px 18px !important;
+
+  border-bottom: 1px solid var(--menu-line) !important;
+
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  letter-spacing: .18em !important;
+}
+
+.side-button {
+  position: relative;
+
+  display: flex !important;
+  align-items: center !important;
+
+  width: 100% !important;
+  min-height: 52px;
+
+  margin-bottom: 8px !important;
+  padding: 14px 15px !important;
+
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+
+  background: transparent !important;
+  color: var(--menu-muted) !important;
+
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: .03em !important;
+
+  transition:
+    background .18s ease,
+    border-color .18s ease,
+    color .18s ease,
+    transform .18s ease !important;
+}
+
+.side-button:hover {
+  background: rgba(255,255,255,.045) !important;
+  border-color: var(--menu-line) !important;
+  color: var(--menu-text) !important;
+  transform: translateX(3px);
+}
+
+.side-button:active {
+  transform: scale(.98);
+}
+
+/* OVERLAY */
+
+.menu-overlay {
+  background: rgba(0,0,0,.68) !important;
+  backdrop-filter: blur(3px);
+}
+
+/* ============================================================
+   ALL MODALS
+   ============================================================ */
+
+.profile-modal,
+.settings-modal,
+.how-modal,
+.rating-modal {
+  background: rgba(0,0,0,.72) !important;
+  backdrop-filter: blur(5px);
+}
+
+/* PANELS */
+
+.profile-window,
+.settings-window,
+.how-window,
+.rating-window {
+  background:
+    linear-gradient(
+      145deg,
+      #151a22 0%,
+      #0c0f14 100%
+    ) !important;
+
+  border: 1px solid var(--menu-line) !important;
+  border-radius: 20px !important;
+
+  box-shadow:
+    0 30px 90px rgba(0,0,0,.65),
+    0 0 0 1px rgba(255,255,255,.015) inset !important;
+
+  color: var(--menu-text);
+}
+
+/* MODAL TITLES */
+
+.profile-title,
+.settings-title,
+.how-title,
+.rating-title {
+  color: var(--menu-text) !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+}
+
+/* SECONDARY TEXT */
+
+.profile-stat-label,
+.profile-best-label,
+.settings-description,
+.how-description,
+.how-row-text,
+.rating-subtitle {
+  color: var(--menu-muted) !important;
+}
+
+/* CLOSE BUTTONS */
+
+.profile-close,
+.settings-close,
+.how-close,
+.rating-close {
+  background: rgba(255,255,255,.045) !important;
+  border: 1px solid var(--menu-line) !important;
+  color: #9da4af !important;
+
+  border-radius: 10px !important;
+
+  transition:
+    background .18s ease,
+    color .18s ease,
+    border-color .18s ease,
+    transform .18s ease !important;
+}
+
+.profile-close:hover,
+.settings-close:hover,
+.how-close:hover,
+.rating-close:hover {
+  background: rgba(255,255,255,.09) !important;
+  border-color: var(--menu-line-hover) !important;
+  color: #fff !important;
+  transform: scale(1.04);
+}
+
+/* PROFILE */
+
+.profile-stats {
+  gap: 10px !important;
+}
+
+.profile-stat {
+  background: rgba(255,255,255,.035) !important;
+  border: 1px solid var(--menu-line) !important;
+  border-radius: 14px !important;
+}
+
+.profile-stat-value {
+  color: var(--menu-text) !important;
+}
+
+.profile-best {
+  background: rgba(255,255,255,.035) !important;
+  border: 1px solid var(--menu-line) !important;
+  border-radius: 14px !important;
+}
+
+.profile-best-value {
+  color: var(--menu-text) !important;
+}
+
+/* RATING */
+
+.rating-row {
+  background: rgba(255,255,255,.025) !important;
+  border: 1px solid transparent !important;
+  border-radius: 12px !important;
+
+  transition:
+    background .18s ease,
+    border-color .18s ease !important;
+}
+
+.rating-row:hover {
+  background: rgba(255,255,255,.055) !important;
+  border-color: var(--menu-line) !important;
+}
+
+.rating-row.me {
+  background: rgba(255,255,255,.065) !important;
+  border-color: rgba(255,255,255,.13) !important;
+}
+
+.rating-name-main,
+.rating-points {
+  color: var(--menu-text) !important;
+}
+
+.rating-level {
+  color: var(--menu-muted) !important;
+}
+
+/* HOW TO PLAY */
+
+.how-row {
+  background: rgba(255,255,255,.025) !important;
+  border: 1px solid var(--menu-line) !important;
+  border-radius: 14px !important;
+
+  transition:
+    background .18s ease,
+    border-color .18s ease !important;
+}
+
+.how-row:hover {
+  background: rgba(255,255,255,.05) !important;
+  border-color: var(--menu-line-hover) !important;
+}
+
+/* SETTINGS */
+
+.settings-option,
+.settings-row {
+  background: rgba(255,255,255,.025) !important;
+  border: 1px solid var(--menu-line) !important;
+  border-radius: 14px !important;
+}
+
+.settings-option:hover,
+.settings-row:hover {
+  background: rgba(255,255,255,.05) !important;
+  border-color: var(--menu-line-hover) !important;
+}
+
+/* COMMON BUTTONS INSIDE MODALS */
+
+.profile-window button:not(.profile-close),
+.settings-window button:not(.settings-close),
+.how-window button:not(.how-close),
+.rating-window button:not(.rating-close) {
+  border-radius: 11px !important;
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .profile-window,
+  .settings-window,
+  .how-window,
+  .rating-window {
+    border-radius: 18px !important;
+    box-shadow: 0 24px 70px rgba(0,0,0,.7) !important;
+  }
+
+  .side-menu {
+    width: min(300px, 86vw) !important;
+  }
+}
