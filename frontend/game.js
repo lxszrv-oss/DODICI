@@ -232,7 +232,11 @@ async function startGame() {
 
     end.classList.add("hidden");
 
-    statusEl.textContent = "Выбери одну карту";
+    if (gameMode === "infinite") {
+    statusEl.textContent = "Выбери одну из двух карт";
+    } else {
+    statusEl.textContent = "Выбери одну из трех карт";
+    }
 
     hud();
 
@@ -367,7 +371,11 @@ reset();
 
         locked = false;
 
-        statusEl.textContent = "Выбери одну карту";
+        if (gameMode === "infinite") {
+        statusEl.textContent = "Выбери одну из двух карт";
+        } else {
+        statusEl.textContent = "Выбери одну из трех карт";
+        }        
 
         hud();
       }, 650);
