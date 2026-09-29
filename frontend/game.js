@@ -943,7 +943,9 @@ function showRatingModal(rating) {
         <div class="rating-crown">🏆</div>
 
         <h2 class="rating-title">
-          РЕЙТИНГ DODICI
+          ${gameMode === "infinite"
+           ? "РЕЙТИНГ БЕСКОНЕЧНОГО РЕЖИМА"
+           : "РЕЙТИНГ DODICI"}
         </h2>
 
         <div class="rating-subtitle">
@@ -994,7 +996,12 @@ ratingButton.addEventListener("click", async () => {
   try {
     ratingButton.disabled = true;
 
-    const response = await fetch(`${API_URL}/rating`);
+    const ratingMode =
+  gameMode === "infinite" ? "infinite" : "normal";
+
+const response = await fetch(
+  `${API_URL}/rating?mode=${ratingMode}`
+);
 
     const data = await response.json();
 

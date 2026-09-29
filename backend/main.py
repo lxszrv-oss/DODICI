@@ -1260,28 +1260,26 @@ def set_500_attempts():
 # ============================================================
 
 @app.get("/rating")
-def rating():
-
+def rating(mode: str = "normal"):
     try:
+        if mode == "infinite":
+            order_field = "infinite_best_level"
+        else:
+            order_field = "points"
 
         with engine.begin() as connection:
-
             result = connection.execute(
                 text(
-                    """
+                    f"""
                     SELECT
                         telegram_id,
                         username,
                         first_name,
-                        points,
-                        best_level
-
+                        {order_field} AS points,
+                        {order_field} AS best_level
                     FROM players
-
                     ORDER BY
-                        points DESC,
-                        best_level DESC
-
+                        {order_field} DESC
                     LIMIT 100
                     """
                 )
@@ -1289,30 +1287,15 @@ def rating():
 
             players = []
 
-            for index, row in enumerate(
-                result,
-                start=1,
-            ):
-
+            for index, row in enumerate(result, start=1):
                 players.append(
                     {
-                        "place":
-                            index,
-
-                        "telegram_id":
-                            row.telegram_id,
-
-                        "username":
-                            row.username,
-
-                        "first_name":
-                            row.first_name,
-
-                        "points":
-                            row.points,
-
-                        "best_level":
-                            row.best_level,
+                        "place": index,
+                        "telegram_id": row.telegram_id,
+                        "username": row.username,
+                        "first_name": row.first_name,
+                        "points": row.points,
+                        "best_level": row.best_level,
                     }
                 )
 
@@ -1322,10 +1305,7 @@ def rating():
         }
 
     except Exception as error:
-
-        logging.exception(
-            "Rating request failed"
-        )
+        logging.exception("Rating request failed")
 
         return {
             "ok": False,
