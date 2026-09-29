@@ -15,6 +15,8 @@ const cards = [...document.querySelectorAll(".card")];
 const levelEl = document.getElementById("level");
 const attemptEl = document.getElementById("attempt");
 const statusEl = document.getElementById("status");
+const heroTitle = document.getElementById("heroTitle");
+const heroSubtitle = document.getElementById("heroSubtitle");
 
 const end = document.getElementById("end");
 const endTitle = document.getElementById("endTitle");
@@ -195,6 +197,9 @@ async function startGame() {
     gameMode = "normal";
     updateModeButton();
     document.body.classList.remove("infinite-mode");
+    heroTitle.textContent = "12 ПРАВИЛЬНЫХ ВЫБОРОВ";
+    heroSubtitle.innerHTML =
+       "Одна из трёх — проигрышная.<br>Сделай выбор.";
 
     cards[2].style.display = "";
     const response = await fetch(`${API_URL}/game/start`, {
@@ -269,6 +274,9 @@ async function startInfiniteGame() {
     gameMode = "infinite";
     updateModeButton();
     document.body.classList.add("infinite-mode");
+    heroTitle.textContent = "БЕСКОНЕЧНЫЙ РЕЖИМ";
+    heroSubtitle.innerHTML =
+      "Одна из двух — проигрышная.<br>Сделай выбор.";
 
     gameId = data.game_id;
     level = data.level;
