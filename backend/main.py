@@ -1332,7 +1332,287 @@ def rating():
             "error": str(error),
         }
 
+# ============================================================
+# INFINITE MODE
+# ============================================================
 
+with engine.begin() as connection:
+    connection.execute(
+        text(
+            """
+            CREATE TABLE IF NOT EXISTS infinite_games (
+                game_id VARCHAR(36) PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                level INTEGER NOT NULL DEFAULT 1,
+                winning_card VARCHAR(1) NOT NULL,
+                finished BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+    )
+
+    connection.execute(
+        text(
+            """
+            ALTER TABLE players
+            ADD COLUMN IF NOT EXISTS infinite_best_level
+            INTEGER NOT NULL DEFAULT 0
+            """
+        )
+    )
+
+
+class InfiniteChoice(BaseModel):
+    game_id: str
+    level: int
+    card: str
+
+
+@app.post("/infinite/start")
+def infinite_start(
+    x_telegram_init_data: str = Header(default="")
+):
+    try:
+        user = validate_telegram_init_data(
+            x_telegram_init_data
+        )
+
+        ensure_player(user)
+
+        telegram_id = user.get("id")
+
+        game_id = str(uuid.uuid4())
+
+        winning_card = secrets.choice(
+            ["0", "1"]
+        )
+
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO infinite_games (
+                        game_id,
+                        user_id,
+                        level,
+                        winning_card,
+                        finished
+                    )
+                    VALUES (
+                        :game_id,
+                        :user_id,
+                        1,
+                        :winning_card,
+                        FALSE
+                    )
+                    """
+                ),
+                {
+                    "game_id": game_id,
+                    "user_id": telegram_id,
+                    "winning_card": winning_card,
+                },
+            )
+
+        return {
+            "ok": True,
+            "game_id": game_id,
+            "level": 1,
+        }
+
+    except Exception as error:
+
+        logging.exception(
+            "Infinite game start failed"
+        )
+
+        return {
+            "ok": False,
+            "error": str(error),
+        }
+
+
+@app.post("/infinite/choice")
+def infinite_choice(
+    payload: InfiniteChoice,
+    x_telegram_init_data: str = Header(default=""),
+):
+    try:
+
+        user = validate_telegram_init_data(
+            x_telegram_init_data
+        )
+
+        with engine.begin() as connection:
+
+            result = connection.execute(
+                text(
+                    """
+                    SELECT
+                        game_id,
+                        user_id,
+                        level,
+                        winning_card,
+                        finished
+                    FROM infinite_games
+                    WHERE game_id = :game_id
+                    """
+                ),
+                {
+                    "game_id": payload.game_id
+                },
+            )
+
+            game = result.mappings().first()
+
+        if not game:
+            return {
+                "ok": False,
+                "error": "Infinite game not found",
+            }
+
+        if game["user_id"] != user.get("id"):
+            return {
+                "ok": False,
+                "error": "This game belongs to another player",
+            }
+
+        if game["finished"]:
+            return {
+                "ok": False,
+                "error": "Infinite game already finished",
+            }
+
+        if payload.level != game["level"]:
+            return {
+                "ok": False,
+                "error": "Wrong level",
+            }
+
+        correct = (
+            payload.card == game["winning_card"]
+        )
+
+        if not correct:
+
+            with engine.begin() as connection:
+
+                connection.execute(
+                    text(
+                        """
+                        UPDATE infinite_games
+                        SET finished = TRUE
+                        WHERE game_id = :game_id
+                        """
+                    ),
+                    {
+                        "game_id": payload.game_id
+                    },
+                )
+
+                connection.execute(
+                    text(
+                        """
+                        UPDATE players
+                        SET
+                            infinite_best_level =
+                                GREATEST(
+                                    infinite_best_level,
+                                    :level
+                                ),
+                            updated_at =
+                                CURRENT_TIMESTAMP
+                        WHERE telegram_id =
+                            :telegram_id
+                        """
+                    ),
+                    {
+                        "telegram_id":
+                            user.get("id"),
+                        "level":
+                            payload.level,
+                    },
+                )
+
+            return {
+                "ok": True,
+                "correct": False,
+                "game_over": True,
+                "level": payload.level,
+            }
+
+        next_level = (
+            payload.level + 1
+        )
+
+        next_winning_card = secrets.choice(
+            ["0", "1"]
+        )
+
+        with engine.begin() as connection:
+
+            connection.execute(
+                text(
+                    """
+                    UPDATE infinite_games
+                    SET
+                        level = :level,
+                        winning_card = :winning_card
+                    WHERE game_id = :game_id
+                    """
+                ),
+                {
+                    "game_id":
+                        payload.game_id,
+                    "level":
+                        next_level,
+                    "winning_card":
+                        next_winning_card,
+                },
+            )
+
+            connection.execute(
+                text(
+                    """
+                    UPDATE players
+                    SET
+                        infinite_best_level =
+                            GREATEST(
+                                infinite_best_level,
+                                :level
+                            ),
+                        updated_at =
+                            CURRENT_TIMESTAMP
+                    WHERE telegram_id =
+                        :telegram_id
+                    """
+                ),
+                {
+                    "telegram_id":
+                        user.get("id"),
+                    "level":
+                        payload.level,
+                },
+            )
+
+        return {
+            "ok": True,
+            "correct": True,
+            "game_over": False,
+            "level": next_level,
+        }
+
+    except Exception as error:
+
+        logging.exception(
+            "Infinite game choice failed"
+        )
+
+        return {
+            "ok": False,
+            "error": str(error),
+        }
 # ============================================================
 # RUN
 # ============================================================
