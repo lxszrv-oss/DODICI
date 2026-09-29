@@ -2603,3 +2603,13 @@ footer {
     height: 64px;
   }
 }
+/* =========================
+   INFINITE MODE — CENTERED CARDS
+========================= */
+
+body.infinite-mode .cards {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(100%, 430px);
+  margin-left: auto;
+  margin-right: auto;
+}

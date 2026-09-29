@@ -194,6 +194,7 @@ async function startGame() {
   try {
     gameMode = "normal";
     updateModeButton();
+    document.body.classList.remove("infinite-mode");
 
     cards[2].style.display = "";
     const response = await fetch(`${API_URL}/game/start`, {
@@ -263,6 +264,7 @@ async function startInfiniteGame() {
 
     gameMode = "infinite";
     updateModeButton();
+    document.body.classList.add("infinite-mode");
 
     gameId = data.game_id;
     level = data.level;
