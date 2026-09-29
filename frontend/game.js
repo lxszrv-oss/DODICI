@@ -30,6 +30,17 @@ const ratingButton = document.getElementById("ratingButton");
 const profileButton = document.getElementById("profileButton");
 const referralButton = document.getElementById("referralButton");
 const infiniteButton = document.getElementById("infiniteButton");
+function updateModeButton() {
+  if (!infiniteButton) {
+    return;
+  }
+
+  if (gameMode === "infinite") {
+    infiniteButton.textContent = "🎮 Обычный режим";
+  } else {
+    infiniteButton.textContent = "♾️ Бесконечный режим";
+  }
+}
 const howButton = document.getElementById("howButton");
 const settingsButton = document.getElementById("settingsButton");
 
@@ -39,6 +50,7 @@ let attempt = 1;
 let locked = false;
 
 let gameMode = "normal";
+updateModeButton();
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -181,6 +193,7 @@ function finish(title, text) {
 async function startGame() {
   try {
     gameMode = "normal";
+    updateModeButton();
 
     cards[2].style.display = "";
     const response = await fetch(`${API_URL}/game/start`, {
@@ -249,6 +262,7 @@ async function startInfiniteGame() {
     }
 
     gameMode = "infinite";
+    updateModeButton();
 
     gameId = data.game_id;
     level = data.level;
@@ -522,7 +536,11 @@ infiniteButton.addEventListener("click", () => {
 
   mainMenu.classList.add("hidden");
 
-  startInfiniteGame();
+  if (gameMode === "infinite") {
+    startGame();
+  } else {
+    startInfiniteGame();
+  }
 });
 
 
