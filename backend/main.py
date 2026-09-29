@@ -1263,9 +1263,25 @@ def set_500_attempts():
 def rating(mode: str = "normal"):
     try:
         if mode == "infinite":
-            order_field = "infinite_best_level"
+            select_sql = """
+                infinite_points AS points,
+                infinite_best_level AS best_level
+            """
+            order_sql = """
+                infinite_points DESC,
+                infinite_best_level DESC,
+                telegram_id ASC
+            """
         else:
-            order_field = "points"
+            select_sql = """
+                points,
+                best_level
+            """
+            order_sql = """
+                points DESC,
+                best_level DESC,
+                telegram_id ASC
+            """
 
         with engine.begin() as connection:
             result = connection.execute(
@@ -1275,11 +1291,10 @@ def rating(mode: str = "normal"):
                         telegram_id,
                         username,
                         first_name,
-                        {order_field} AS points,
-                        {order_field} AS best_level
+                        {select_sql}
                     FROM players
                     ORDER BY
-                        {order_field} DESC
+                        {order_sql}
                     LIMIT 100
                     """
                 )
@@ -1312,6 +1327,8 @@ def rating(mode: str = "normal"):
             "error": str(error),
         }
 
+
+
 # ============================================================
 # INFINITE MODE
 # ============================================================
@@ -1337,6 +1354,16 @@ with engine.begin() as connection:
             """
             ALTER TABLE players
             ADD COLUMN IF NOT EXISTS infinite_best_level
+            INTEGER NOT NULL DEFAULT 0
+            """
+        )
+    )
+
+    connection.execute(
+        text(
+            """
+            ALTER TABLE players
+            ADD COLUMN IF NOT EXISTS infinite_points
             INTEGER NOT NULL DEFAULT 0
             """
         )
@@ -1474,6 +1501,10 @@ def infinite_choice(
             payload.card == game["winning_card"]
         )
 
+        # ----------------------------------------------------
+        # WRONG CARD
+        # ----------------------------------------------------
+
         if not correct:
 
             with engine.begin() as connection:
@@ -1482,7 +1513,8 @@ def infinite_choice(
                     text(
                         """
                         UPDATE infinite_games
-                        SET finished = TRUE
+                        SET
+                            finished = TRUE
                         WHERE game_id = :game_id
                         """
                     ),
@@ -1520,7 +1552,12 @@ def infinite_choice(
                 "correct": False,
                 "game_over": True,
                 "level": payload.level,
+                "points_added": 0,
             }
+
+        # ----------------------------------------------------
+        # CORRECT CARD
+        # ----------------------------------------------------
 
         next_level = (
             payload.level + 1
@@ -1545,8 +1582,10 @@ def infinite_choice(
                 {
                     "game_id":
                         payload.game_id,
+
                     "level":
                         next_level,
+
                     "winning_card":
                         next_winning_card,
                 },
@@ -1562,6 +1601,8 @@ def infinite_choice(
                                 infinite_best_level,
                                 :level
                             ),
+                        infinite_points =
+                            infinite_points + :points_added,
                         updated_at =
                             CURRENT_TIMESTAMP
                     WHERE telegram_id =
@@ -1571,7 +1612,11 @@ def infinite_choice(
                 {
                     "telegram_id":
                         user.get("id"),
+
                     "level":
+                        payload.level,
+
+                    "points_added":
                         payload.level,
                 },
             )
@@ -1581,6 +1626,7 @@ def infinite_choice(
             "correct": True,
             "game_over": False,
             "level": next_level,
+            "points_added": payload.level,
         }
 
     except Exception as error:
@@ -1593,6 +1639,8 @@ def infinite_choice(
             "ok": False,
             "error": str(error),
         }
+
+
 # ============================================================
 # RUN
 # ============================================================
