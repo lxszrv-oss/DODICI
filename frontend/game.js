@@ -29,6 +29,7 @@ const menuOverlay = document.getElementById("menuOverlay");
 const ratingButton = document.getElementById("ratingButton");
 const profileButton = document.getElementById("profileButton");
 const referralButton = document.getElementById("referralButton");
+const infiniteButton = document.getElementById("infiniteButton");
 const howButton = document.getElementById("howButton");
 const settingsButton = document.getElementById("settingsButton");
 
@@ -36,6 +37,8 @@ let gameId = null;
 let level = 1;
 let attempt = 1;
 let locked = false;
+
+let gameMode = "normal";
 
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -115,6 +118,12 @@ function playSound(type) {
 }
 
 function hud() {
+  if (gameMode === "infinite") {
+    levelEl.textContent = String(level).padStart(2, "0");
+    attemptEl.textContent = "∞";
+    return;
+  }
+
   levelEl.textContent = String(level).padStart(2, "0") + " / 12";
   attemptEl.textContent = attempt;
 }
@@ -171,6 +180,9 @@ function finish(title, text) {
 
 async function startGame() {
   try {
+    gameMode = "normal";
+
+    cards[2].style.display = "";
     const response = await fetch(`${API_URL}/game/start`, {
       method: "POST",
       headers: {
@@ -217,8 +229,58 @@ async function startGame() {
       "Ошибка соединения с сервером";
   }
 }
+async function startInfiniteGame() {
+  try {
+    const response = await fetch(`${API_URL}/infinite/start`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": telegramInitData
+      },
+      body: "{}"
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(
+        data.error || "Не удалось начать бесконечный режим"
+      );
+    }
+
+    gameMode = "infinite";
+
+    gameId = data.game_id;
+    level = data.level;
+    attempt = Infinity;
+    locked = false;
+
+    // В бесконечном режиме только 2 карты
+    cards[2].style.display = "none";
+
+    reset();
+
+    end.classList.add("hidden");
+
+    statusEl.textContent =
+      "Выбери одну из двух карт";
+
+    hud();
+
+  } catch (error) {
+    console.error(error);
+
+    statusEl.textContent =
+      "Ошибка соединения с сервером";
+  }
+}
 
 async function choose(i) {
+  if (gameMode === "infinite") {
+    await chooseInfinite(i);
+    return;
+  }
+
   if (locked || !gameId) {
     return;
   }
@@ -316,6 +378,103 @@ reset();
     locked = false;
   }
 }
+async function chooseInfinite(i) {
+  if (locked || !gameId) {
+    return;
+  }
+
+  locked = true;
+
+  statusEl.textContent = "Проверяем…";
+
+  try {
+    const response = await fetch(`${API_URL}/infinite/choice`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Telegram-Init-Data": telegramInitData
+      },
+      body: JSON.stringify({
+        game_id: gameId,
+        level: level,
+        card: String(i)
+      })
+    });
+
+    const data = await response.json();
+
+    if (!data.ok) {
+      throw new Error(
+        data.error || "Ошибка сервера"
+      );
+    }
+
+    if (data.correct) {
+      cards[i].classList.add("good");
+      cards[i].classList.add("correct");
+
+      playSound("win");
+
+      document.body.classList.add("victory");
+
+      setTimeout(() => {
+        document.body.classList.remove("victory");
+      }, 800);
+
+      statusEl.textContent =
+        "Правильно! Следующий уровень…";
+
+      setTimeout(() => {
+        level = data.level;
+
+        playSound("level");
+
+        reset();
+
+        cards.forEach(card => {
+          card.classList.remove("card-enter");
+        });
+
+        void cards[0].offsetWidth;
+
+        cards.forEach((card, index) => {
+          if (index < 2) {
+            card.classList.add("card-enter");
+          }
+        });
+
+        locked = false;
+
+        statusEl.textContent =
+          "Выбери одну из двух карт";
+
+        hud();
+      }, 650);
+
+    } else {
+      cards[i].classList.add("bad");
+      cards[i].classList.add("wrong");
+
+      playSound("lose");
+
+      statusEl.textContent =
+        "Ой! Это была не та карточка 💥";
+
+      finish(
+        "БЕСКОНЕЧНЫЙ ЗАБЕГ ОКОНЧЕН",
+        "Ты дошёл до уровня " + level + "."
+      );
+    }
+
+  } catch (error) {
+    console.error(error);
+
+    statusEl.textContent =
+      "Ошибка соединения с сервером";
+
+    locked = false;
+  }
+}
 
 cards.forEach(card => {
   card.addEventListener("click", () => {
@@ -324,7 +483,11 @@ cards.forEach(card => {
 });
 
 document.getElementById("restart").addEventListener("click", () => {
-  startGame();
+  if (gameMode === "infinite") {
+    startInfiniteGame();
+  } else {
+    startGame();
+  }
 });
 
 mainMenu.addEventListener("click", () => {
@@ -351,6 +514,15 @@ menuButton.addEventListener("click", () => {
 
 menuOverlay.addEventListener("click", () => {
   closeMenu();
+});
+infiniteButton.addEventListener("click", () => {
+  closeMenu();
+
+  playSound("start");
+
+  mainMenu.classList.add("hidden");
+
+  startInfiniteGame();
 });
 
 
